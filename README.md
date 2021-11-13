@@ -8,6 +8,31 @@ Based on: https://git.bingo-ev.de/freifunk/ansible-ffin/-/tree/master
 - Gateway IP: 10.22.8.1
 - Domain: "90"
 
+## Architecture
+
+The architecture as far as I understand it:
+
+![Minimal Setup](doc/images/arch-mini.svg "Minimal Setup")
+
+- interface: `fastd90`
+  - ingress for clients/APs
+  - port: udp/10090
+- interface: `tunneldigger90`
+  - ingress for clients/APs
+  - l2tp
+- interface: `bat90`
+  - B.A.T.M.A.N batadv interface (server)
+- interface: br90
+  - interface to bridge:
+    - tunnels `fastd90` and `tunneldigger90` (ingress)
+    - B.A.T.M.A.N server side `bat90`
+  - services:
+    - dhcp for clients, IPv4 and IPv6
+    - optional:
+      - bind for clients/APs name resolution and resolver
+      - ntp for clients/APs
+
+
 ---
 
 # Ansible
