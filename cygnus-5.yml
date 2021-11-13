@@ -31,6 +31,21 @@
         name: "{{ packages_wanted }}"
         state: present
 
+    - name: "users: add administrative users"
+      ansible.builtin.user:
+        name: "{{ item.username }}"
+        password: "{{ item.password|default('*') }}"
+        update_password: "{{ item.update_password|default('on_create') }}"
+        groups: "{{ item.groups }}"
+      loop: "{{ administrative_users }}"
+
+    - name: "users: add authorized_keys"
+      ansible.posix.authorized_key:
+        user: "{{ item.username }}"
+        key: "{{ item.authorized_keys|join('\n') }}"
+        exclusive: "{{ item.authorized_keys_exclusive|default('yes') }}"
+      loop: "{{ administrative_users }}"
+
   tasks:
 
     # enable & start qemu-guest agent
