@@ -54,6 +54,18 @@ The architecture as far as I understand it:
       - bind for clients/APs name resolution and resolver
       - ntp for clients/APs
 
+### Domains
+
+- testing subnets, one per domain:
+  - 10.22.8.0/21
+  - 10.22.16.0/21
+  - 10.22.24.0/21
+- values picked without further thinking
+
+- "90"
+  - subnet: 10.22.8.0/21
+  - gw ffp ip: 10.22.8.1
+  - dhcp range: 10.22.9.0 10.22.10.255
 
 ---
 
@@ -209,6 +221,8 @@ Address=10.22.8.1/21
 
 - [ ] Fix dhcp
 - [ ] adjust nftables
+  - [ ] allow traffic on internal interfaces
+  - [ ] nat for IPv4 traffic
 - [ ] L2TP
 - [ ] IPv6 (ULA?)
 - [ ] more services… (dns, ntp, gre, bird…)
