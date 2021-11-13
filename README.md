@@ -217,12 +217,46 @@ Address=10.22.8.1/21
 
 **TODO**
 
+## dhcpd
+
+1. create `/etc/dhcpd.conf`
+    ```
+    default-lease-time 1800;
+    max-lease-time 43200;
+
+    authoritative;
+
+    subnet 10.22.8.0 netmask 255.255.248.0 {
+      interface br90;
+      range 10.22.9.0 10.22.10.255;
+
+      option routers 10.22.8.1;
+      option domain-name-servers 85.214.20.141, 80.67.169.40, 194.150.168.168;
+    }
+    ```
+1. check for leasfile:
+    - ls `/var/lib/dhcp/dhcpd.leases`
+    - if not exists: `touch /var/lib/dhcp/dhcpd.leases && chown dhcp:dhcp /var/lib/dhcp/dhcpd.leases`
+1. copy service file: `cp /usr/lib/systemd/system/dhcpd4.service /etc/systemd/system/dhcpd4@.service`
+1. adjust service file `/etc/systemd/system/dhcpd4@.service`:
+    ``` 
+    ...
+    [Service]
+    ...
+    ExecStart=/usr/bin/dhcpd -4 -q -cf /etc/dhcpd.conf -pf /run/dhcpd4/dhcpd.pid %I
+    ...
+    ```
+1. start dhcpd: `systemctl start dhcpd4@br90`
+
+References:
+- https://wiki.archlinux.org/title/Dhcpd#Listening_on_only_one_interface
+
 # TODOs
 
-- [ ] Fix dhcp
+- [x] Fix dhcp
 - [ ] adjust nftables
-  - [ ] allow traffic on internal interfaces
-  - [ ] nat for IPv4 traffic
+    - [ ] allow traffic on internal interfaces
+    - [ ] nat for IPv4 traffic
 - [ ] L2TP
 - [ ] IPv6 (ULA?)
 - [ ] more services… (dns, ntp, gre, bird…)
