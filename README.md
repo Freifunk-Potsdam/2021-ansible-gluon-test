@@ -8,6 +8,17 @@ Based on: https://git.bingo-ev.de/freifunk/ansible-ffin/-/tree/master
 - Gateway IP: 10.22.8.1
 - Domain: "90"
 
+## Servers
+
+- cygnus-5 (cygnus-5 .srv.0xef.de)
+  - IPv4, IPv6 (only one /64)
+  - hoster: contabo
+  - 4in6 tunnel do not work
+  - OS: Arch Linux
+  - 4 CPUs (Cores)
+  - 8GB RAM
+
+
 ## Architecture
 
 The architecture as far as I understand it:
