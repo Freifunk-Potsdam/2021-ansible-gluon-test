@@ -1,0 +1,4 @@
+---
+journald_config:
+  Storage: persistent
+  SystemMaxUse: 1G
