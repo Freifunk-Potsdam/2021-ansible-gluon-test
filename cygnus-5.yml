@@ -134,6 +134,7 @@
           ; 10.22.8.1 - 10.0.15.254
           ; 255.255.248.0
           Address=10.22.8.1/21
+          Address=fd28:a735:685c::3c0e:ecff:fe29:4b62/64
       notify:
         - restart systemd-networkd
     ## END bat/br network devices
