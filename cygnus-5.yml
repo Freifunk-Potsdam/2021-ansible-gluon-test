@@ -244,6 +244,8 @@
 
           # Log everything to syslog
           #log to syslog level warn;
+          #log to syslog level debug;
+          log to stderr level info;
 
           # Hide IP addresses in log output
           #hide ip addresses yes;
@@ -253,6 +255,11 @@
 
           # Status Socket
           status socket "/run/fastd-90/fastd.sock";
+
+          # accept any host
+          on verify "
+            exit 0
+          ";
 
           # Configure a shell command that is run when fastd comes up
           on up "
