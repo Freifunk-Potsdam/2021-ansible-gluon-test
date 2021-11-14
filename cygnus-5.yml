@@ -232,7 +232,7 @@
           mode tap;
 
           # Set the mtu of the interface 
-          mtu 1320;     # fine tuning needed, 1406
+          mtu 1312;     # fine tuning needed, 1406
 
           # Set the methods (aes128-gcm preferred, salsa2012+umac preferred for nodes)
           method "aes128-gcm";
