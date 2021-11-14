@@ -117,7 +117,7 @@ Kind=batadv
 GatewayMode=server
 GatewayBandwidthDown=100M
 GatewayBandwidthUp=100M
-;RoutingAlgorithm=
+RoutingAlgorithm=batman-iv
 ```
 
 `/etc/systemd/network/50-bat90.network`:
@@ -154,6 +154,7 @@ Name=br90
 ; 10.22.8.1 - 10.0.15.254
 ; 255.255.248.0
 Address=10.22.8.1/21
+Address=fd28:a735:685c::3c0e:ecff:fe29:4b62/64
 ```
 
 ## fastd tunnel/vpn
@@ -182,7 +183,7 @@ Address=10.22.8.1/21
     mode tap;
 
     # Set the mtu of the interface
-    #mtu 1406;
+    mtu 1320;     # fine tuning needed, 1406
 
     # Set the methods (aes128-gcm preferred, salsa2012+umac preferred for nodes)
     method "aes128-gcm";
@@ -195,6 +196,7 @@ Address=10.22.8.1/21
 
     # Log everything to syslog
     #log to syslog level warn;
+    log to stderr level info;
 
     # Hide IP addresses in log output
     #hide ip addresses yes;
@@ -204,6 +206,11 @@ Address=10.22.8.1/21
 
     # Status Socket
     status socket "/run/fastd-90/fastd.sock";
+
+    # accept any host
+    on verify "
+      exit 0
+    ";
 
     # Configure a shell command that is run when fastd comes up
     on up "
