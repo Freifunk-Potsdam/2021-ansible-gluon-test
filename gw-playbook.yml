@@ -1,6 +1,6 @@
 ---
 - hosts:
-    - cygnus-5
+    - ffp-gw
 
   roles:
     - Frzk.nftables
@@ -21,7 +21,7 @@
       - vim
       - zsh
     batman:
-      version: 
+      version:
 
 
   pre_tasks:
@@ -88,7 +88,7 @@
           RoutingAlgorithm=batman-iv
       notify:
         - restart systemd-networkd
-    
+
     - name: "systemd-networkd: BATMAN network for domain 90"
       ansible.builtin.copy:
         dest: /etc/systemd/network/50-bat90.network
@@ -104,7 +104,7 @@
           BatmanAdvanced=br90
       notify:
         - restart systemd-networkd
-    
+
     - name: "systemd-networkd: bridge netdev for domain 90"
       ansible.builtin.copy:
         dest: /etc/systemd/network/50-br90.netdev
@@ -231,7 +231,7 @@
           # Set the mode, the interface will work as
           mode tap;
 
-          # Set the mtu of the interface 
+          # Set the mtu of the interface
           mtu 1312;     # fine tuning needed, 1406
 
           # Set the methods (aes128-gcm preferred, salsa2012+umac preferred for nodes)
@@ -299,7 +299,7 @@
         owner: root
         group: root
         mode: "755"
-    
+
     - name: "fastd/haveged: override haveged service"
       ansible.builtin.copy:
         dest: /etc/systemd/system/haveged.service.d/ansible-managed.conf
@@ -330,7 +330,7 @@
       ansible.builtin.package:
         name: dhcp
         state: present
-    
+
     - name: "dhcpd: create configuration"
       ansible.builtin.copy:
         dest: /etc/dhcpd.conf
