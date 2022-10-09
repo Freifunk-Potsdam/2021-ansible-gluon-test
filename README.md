@@ -10,25 +10,18 @@ Based on: https://git.bingo-ev.de/freifunk/ansible-ffin/-/tree/master
 
 ## Servers
 
-- cygnus-5 (cygnus-5 .srv.0xef.de)
+- chapek-9 (chapek-9.srv.0xef.de)
   - IPv4, IPv6 (only one /64)
-  - hoster: contabo
-  - 4in6 tunnel do not work
-  - OS: Arch Linux
-  - 4 CPUs (Cores)
+  - hoster: Netcup
+  - OS: Ubuntu 22.04 LTS
+  - 2 CPUs (Cores)
   - 8GB RAM
   - sshd on port 2424, fingerprints:
     ```
-    DSA     SHA256:jeBAPx6yE4cBWZpUX0wTOE0IjWemcnQVEILP1RUws1A
-    DSA     MD5:9c:f7:06:c7:d1:75:7d:31:b3:c4:e7:51:c6:d9:7a:be
-    ECDSA   SHA256:Pa3y8jkH9GaZFBDUZAAhkPCadQIv33Y9md2tmd8CY3w
-    ECDSA   MD5:d3:a2:e9:ee:ff:31:b4:ee:c9:36:15:d0:16:70:94:2f
-    ED25519 SHA256:IMUG/fP1g6vEBA49h34XzwbIKMfLwso1SXUIfhzclFU
-    ED25519 MD5:a6:60:d2:1e:8a:b0:29:31:3c:85:45:70:d4:d3:cc:6c
-    RSA     SHA256:prcAXH1QxDupGIId++nDyXqR3rku/rRkLQ2R9AN8so4
-    RSA     MD5:23:e1:25:65:dd:2b:99:dc:db:b9:53:10:e0:45:4f:e0
+    ED25519 SHA256:As2kvkR5hf+h4mMZx7kJT0OMmH05m5vG4vZ28t/Bk74
+    RSA     SHA256:gkHMQMD5I4aKMCyz6y7WL3E6cC9lDby1FO/tmFG2eCM
+    ECDSA   SHA256:VxjYhGMB4Bx2Tbkc+4qmUrSpWo8KWvQnXK3MvSb8jPo
     ```
-
 
 ## Architecture
 
@@ -246,7 +239,7 @@ Address=fd28:a735:685c::3c0e:ecff:fe29:4b62/64
     - if not exists: `touch /var/lib/dhcp/dhcpd.leases && chown dhcp:dhcp /var/lib/dhcp/dhcpd.leases`
 1. copy service file: `cp /usr/lib/systemd/system/dhcpd4.service /etc/systemd/system/dhcpd4@.service`
 1. adjust service file `/etc/systemd/system/dhcpd4@.service`:
-    ``` 
+    ```
     ...
     [Service]
     ...
