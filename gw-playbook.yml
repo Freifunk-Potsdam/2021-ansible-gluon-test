@@ -332,7 +332,7 @@
     ## DHCP
     - name: "dhcpd: install package(s)"
       ansible.builtin.package:
-        name: dhcp
+        name: isc-dhcp-server
         state: present
 
     - name: "dhcpd: create configuration"
@@ -361,8 +361,8 @@
       ansible.builtin.file:
         path: /var/lib/dhcp/dhcpd.leases
         state: file
-        owner: dhcp
-        group: dhcp
+        owner: dhcpd
+        group: dhcpd
         mode: "644"
 
     - name: "dhcpd: create folder for dhcpd4@ service file"
@@ -389,13 +389,13 @@
 
           [Service]
           Type=forking
-          ExecStart=/usr/bin/dhcpd -4 -q -cf /etc/dhcpd.conf -pf /run/dhcpd4/dhcpd.pid %I
-          RuntimeDirectory=dhcpd4
-          PIDFile=/run/dhcpd4/dhcpd.pid
-          User=dhcp
+          ExecStart=/usr/sbin/dhcpd -4 -q -cf /etc/dhcpd.conf -pf /run/dhcp-server/dhcpd.pid %I
+          RuntimeDirectory=dhcp-server
+          PIDFile=/run/dhcp-server/dhcpd.pid
+          User=dhcpd
           AmbientCapabilities=CAP_NET_BIND_SERVICE CAP_NET_RAW
-          ProtectSystem=full
-          ProtectHome=on
+          #ProtectSystem=full
+          #ProtectHome=on
           KillSignal=SIGINT
           # We pull in network-online.target for a configured network connection.
           # However this is not guaranteed to be the network connection our
