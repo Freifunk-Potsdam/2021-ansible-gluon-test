@@ -269,7 +269,8 @@
           # Configure a shell command that is run when fastd comes up
           on up "
             # Add fastd interface to bridge, then enable it
-            ip link set dev $INTERFACE master br90 && ip link set dev $INTERFACE up
+            # ip link set dev $INTERFACE master br90 && ip link set dev $INTERFACE up
+            ip link set dev $INTERFACE up && batctl bat90 if add fastd90
           ";
       notify:
         - restart fastd
