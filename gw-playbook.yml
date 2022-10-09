@@ -2,10 +2,14 @@
 - hosts:
     - ffp-gw
 
+  collections:
+    - devsec.hardening
+
   roles:
     - Frzk.nftables
     - stuvusit.systemd-journald
     - hafu.systemd_timesyncd
+    - ssh_hardening
 
   vars:
     packages_wanted:

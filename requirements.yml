@@ -1,4 +1,8 @@
 ---
+collections:
+  - name: devsec.hardening
+    version: 8.2.0
+
 roles:
   - src: hafu.systemd_timesyncd
   - src: Frzk.nftables
