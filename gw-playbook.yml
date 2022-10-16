@@ -72,6 +72,15 @@
         name: bridge-utils
         state: present
 
+    # allow IPv4 forwarding
+    - name:  "set net.ipv4.ip_forward true"
+      ansible.posix.sysctl:
+        reload: true
+        state: present
+        sysctl_file: /etc/sysctl.d/local-ffp.conf
+        name: net.ipv4.ip_forward
+        value: "1"
+
     ## bat/br network devices
     - name: "systemd-networkd: BATMAN netdev for domain 90"
       ansible.builtin.copy:

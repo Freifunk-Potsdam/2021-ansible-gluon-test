@@ -57,9 +57,22 @@ nftables_tables:
           type: "filter"
           hook: "forward"
           priority: "filter"
-          policy: "drop"
+          policy: "accept"
       - name: "output"
         base:
           type: "filter"
           hook: "output"
           priority: 0
+  - name: nat
+    family: inet  # or ip
+    chains:
+      - name: postrouting
+        base:
+          type: "nat"
+          hook: "postrouting"
+          priority: "srcnat"
+          policy: "accept"
+        rules:
+          - position: 1
+            statement: "ip saddr 10.22.8.0/21 oif \"eth0\" masquerade"
+            comment: "masquerade ipv4 ffp client traffic"
