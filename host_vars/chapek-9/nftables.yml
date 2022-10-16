@@ -76,3 +76,6 @@ nftables_tables:
           - position: 1
             statement: "ip saddr 10.22.8.0/21 oif \"eth0\" masquerade"
             comment: "masquerade ipv4 ffp client traffic"
+          - position: 2
+            statement: "ip6 saddr fd28:a735:685c::/64 oif \"eth0\" masquerade"
+            comment: "masquerade ipv6 ffp client traffic via link local"
