@@ -24,6 +24,8 @@
       - tmux
       - vim
       - zsh
+      - build-essential
+      - cmake             # tunneldigger
     batman:
       version:
 
@@ -89,6 +91,116 @@
         sysctl_file: /etc/sysctl.d/local-ffp.conf
         name: net.ipv6.conf.all.forwarding
         value: "1"
+
+    ## tunneldigger
+    - name: "tunneldigger: checkout code"
+      ansible.builtin.git:
+        repo: "https://github.com/wlanslovenija/tunneldigger.git"
+        dest: "/usr/src/tunneldigger"
+
+    - name: "tunneldigger: cmake tunneldigger-client"
+      ansible.builtin.command:
+        chdir: "/usr/src/tunneldigger/client"
+        cmd: cmake .
+
+    - name: "tunneldigger: build tunneldigger-client"
+      ansible.builtin.make:
+        chdir: "/usr/src/tunneldigger/client"
+        target: all
+
+    - name: "tunneldigger: install tunneldigger-client"
+      ansible.builtin.make:
+        chdir: "/usr/src/tunneldigger/client"
+        target: install
+
+    - name: "tunneldigger: client uplink unit file"
+      register: tunneldigger_service_file
+      ansible.builtin.copy:
+        dest: "/etc/systemd/system/tunneldigger-ffup.service"
+        owner: root
+        group: root
+        mode: "644"
+        content: |
+          [Unit]
+          Description=tunneldigger client ffup
+          After=network.target network-online.target
+          Wants=network-online.target
+
+          [Service]
+          ExecStart=/usr/local/bin/tunneldigger -f -i ffup -u 228e020e-8135-41db-b4e8-0b61f82739c6 -t 2 -b a.tunnel.berlin.freifunk.net:8942 -b b.tunnel.berlin.freifunk.net:8942 -b c.tunnel.berlin.freifunk.net:8942 -b d.tunnel.berlin.freifunk.net:8942
+          #ProtectSystem=full
+          #ProtectHome=on
+          KillSignal=SIGINT
+          # We pull in network-online.target for a configured network connection.
+          # However this is not guaranteed to be the network connection our
+          # networks are configured for. So try to restart on failure with a delay
+          # of two seconds. Rate limiting kicks in after 12 seconds.
+          RestartSec=2s
+          Restart=on-failure
+          StartLimitInterval=12s
+
+          [Install]
+          WantedBy=multi-user.target
+
+    # - name: "tunneldigger: systemd daemon reload"
+    #   when: tunneldigger_service_file.changed
+    #   ansible.builtin.systemd:
+    #     daemon_reload: true
+
+    - name: "tunneldigger: add policy routing"
+      ansible.builtin.lineinfile:
+        path: "/etc/iproute2/rt_tables"
+        line: "200 ffup"
+
+    - name: "tunneldigger/systemd: create network file for ffup"
+      ansible.builtin.copy:
+        dest: /etc/systemd/network/60-ffup.network
+        owner: root
+        group: root
+        mode: "644"
+        content: |
+          [Match]
+          Name=ffup
+
+          [Network]
+          DHCP=yes
+          RouteMetric=1024
+
+          # add routes into "ffup" routing table
+          [DHCPv4]
+          RouteTable=200
+
+          # add the policy route
+          [RoutingPolicyRule]
+          Table=200
+          IncomingInterface=br90
+
+    # the rules from dhcp:
+    #   ip ro add default via 172.31.224.1 dev ffup table ffup
+    #   ip ro add 172.31.224.0/20 dev ffup table
+    #   ip ro add 172.31.224.1 dev ffup table ffup
+    # the policy rule
+    #   ip rule add iif br90 lookup ffup
+    #
+    # result:
+    # $ ip ro sh table ffup
+    #   default via 172.31.224.1 dev ffup
+    #   172.31.224.0/20 dev ffup scope link
+    #   172.31.224.1 dev ffup scope link
+    # $ ip rule show
+    # 0:      from all lookup local
+    # 32763:  from all iif br90 lookup ffup
+    # 32766:  from all lookup main
+    # 32767:  from all lookup default
+
+    - name: "tunneldigger: start tunneldigger-client"
+      when: tunneldigger_service_file.changed
+      ansible.builtin.systemd:
+        daemon_reload: true
+        enabled: true
+        name: tunneldigger-ffup.service
+        state: restarted
+    ## tunneldigger END
 
     ## bat/br network devices
     - name: "systemd-networkd: BATMAN netdev for domain 90"
