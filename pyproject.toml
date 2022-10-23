@@ -5,10 +5,13 @@ description = "Ansible FFP Gluon Test Setup"
 authors = ["Hannes Fuchs <hannes.fuchs@gmx.org>"]
 
 [tool.poetry.dependencies]
-python = ">=3.8"
+python = ">=3.8,<4.0"
 ansible = "^6.4.0"
 
 [tool.poetry.dev-dependencies]
+
+[tool.poetry.group.dev.dependencies]
+ansible-lint = "^6.4.0"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
