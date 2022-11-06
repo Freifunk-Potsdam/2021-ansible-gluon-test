@@ -543,6 +543,42 @@
         - restart dhcpd
     ## END DHCP
 
+    ## radvd
+    - name: Install package
+      ansible.builtin.package:
+        name: radvd
+
+    - name: Create config
+      ansible.builtin.copy:
+        dest: /etc/radvd.conf
+        owner: root
+        group: root
+        mode: "0644"
+        content: |
+          interface br90 {
+              AdvSendAdvert on;
+              IgnoreIfMissing on;
+              AdvManagedFlag off;
+              AdvOtherConfigFlag on;
+              MaxRtrAdvInterval 200;
+              AdvLinkMTU 1280;
+              prefix fd28:a735:685c::/64 {
+                  AdvOnLink on;
+                  AdvAutonomous on;
+                  AdvRouterAddr on;
+              };
+              RDNSS 2620:fe::fe 2620:fe::9 {
+              };
+          };
+      notify:
+        - Restart radvd
+
+    - name: Enable service
+      ansible.builtin.service:
+        name: radvd
+        state: started
+    ## END radvd
+
     # TODO: enable forwarding
 
     # END ffp-gluon test
@@ -567,4 +603,9 @@
     - name: restart dhcpd
       ansible.builtin.systemd:
         name: dhcpd4@br90
+        state: restarted
+
+    - name: Restart radvd
+      ansible.builtin.service:
+        name: radvd
         state: restarted
