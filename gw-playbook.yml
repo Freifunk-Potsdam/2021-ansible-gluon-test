@@ -236,6 +236,12 @@
           [Network]
           Bridge=br90
           BatmanAdvanced=br90
+
+          [RoutingPolicyRule]
+          Table=local
+          IncomingInterface=br90
+          Priority=10010
+          Type=unreachable
       notify:
         - restart systemd-networkd
 
