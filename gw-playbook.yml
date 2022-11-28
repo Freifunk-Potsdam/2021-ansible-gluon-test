@@ -474,6 +474,13 @@
         name: isc-dhcp-server
         state: present
 
+    - name: "dhcpd: disable default unit"
+      ansible.builtin.systemd:
+        name: isc-dhcp-server.service
+        enabled: false
+        masked: true    # do not allow to start, even manually
+        state: stopped
+
     - name: "dhcpd: create configuration"
       ansible.builtin.copy:
         dest: /etc/dhcpd.conf
@@ -548,6 +555,12 @@
           WantedBy=multi-user.target
       notify:
         - restart dhcpd
+
+    - name: "dhcpd: start and enable dhcpd unit on br90 interface"
+      ansible.builtin.systemd:
+        name: dhcpd4@br90
+        enabled: true
+        state: started
     ## END DHCP
 
     ## radvd
