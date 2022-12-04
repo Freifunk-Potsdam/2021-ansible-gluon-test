@@ -498,7 +498,7 @@
             range 10.22.9.0 10.22.10.255;
 
             option routers 10.22.8.1;
-            option domain-name-servers 85.214.20.141, 80.67.169.40, 194.150.168.168;
+            option domain-name-servers 10.22.8.1;
           }
       notify:
         - restart dhcpd
@@ -586,7 +586,7 @@
             interface br90;
             range6 fd28:a735:685c::ffff fd28:a735:685c::ffff:ffff;
 
-            option dhcp6.name-servers 2620:fe::fe, 2620:fe::9;
+            option dhcp6.name-servers fd28:a735:685c::1;
             #option dhcp6.domain-search "ffp";
           }
       notify:
@@ -676,7 +676,7 @@
                   AdvAutonomous on;
                   AdvRouterAddr on;
               };
-              RDNSS 2620:fe::fe 2620:fe::9 {
+              RDNSS fd28:a735:685c::1 {
               };
           };
       notify:
