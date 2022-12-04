@@ -561,6 +561,95 @@
         name: dhcpd4@br90
         enabled: true
         state: started
+
+    - name: "dhcpd: disable default unit (IPv6)"
+      ansible.builtin.systemd:
+        name: isc-dhcp-server6.service
+        enabled: false
+        masked: true    # do not allow to start, even manually
+        state: stopped
+
+    - name: "dhcpd: create configuration"
+      ansible.builtin.copy:
+        dest: /etc/dhcpd6.conf
+        owner: root
+        group: root
+        mode: "644"
+        content: |
+          default-lease-time 1800;
+          max-lease-time 43200;
+
+          # Enable RFC 5007 support (same than for DHCPv4)
+          allow leasequery;
+
+          subnet6 fd28:a735:685c::/64 {
+            interface br90;
+            range6 fd28:a735:685c::ffff fd28:a735:685c::ffff:ffff;
+
+            option dhcp6.name-servers 2620:fe::fe, 2620:fe::9;
+            #option dhcp6.domain-search "ffp";
+          }
+      notify:
+        - restart dhcpd6
+
+    - name: "dhcpd: create lease file if not exists (IPv6)"
+      ansible.builtin.file:
+        path: /var/lib/dhcp/dhcpd6.leases
+        state: file
+        owner: dhcpd
+        group: dhcpd
+        mode: "644"
+
+    - name: "dhcpd: create folder for dhcpd6@ service file"
+      ansible.builtin.file:
+        path: /etc/systemd/system/dhcpd6@.service.d
+        state: directory
+        owner: root
+        group: root
+        mode: "755"
+      notify:
+        - systemd daemon reload
+
+    - name: "dhcpd: override dhcpd6@ service"
+      ansible.builtin.copy:
+        dest: /etc/systemd/system/dhcpd6@.service
+        owner: root
+        group: root
+        mode: "644"
+        content: |
+          [Unit]
+          Description=IPv6 DHCP server
+          After=network.target network-online.target
+          Wants=network-online.target
+
+          [Service]
+          Type=forking
+          ExecStart=/usr/sbin/dhcpd -6 -q -cf /etc/dhcpd6.conf -pf /run/dhcp-server/dhcpd6.pid %I
+          RuntimeDirectory=dhcp-server
+          PIDFile=/run/dhcp-server/dhcpd6.pid
+          User=dhcpd
+          AmbientCapabilities=CAP_NET_BIND_SERVICE CAP_NET_RAW
+          #ProtectSystem=full
+          #ProtectHome=on
+          KillSignal=SIGINT
+          # We pull in network-online.target for a configured network connection.
+          # However this is not guaranteed to be the network connection our
+          # networks are configured for. So try to restart on failure with a delay
+          # of two seconds. Rate limiting kicks in after 12 seconds.
+          RestartSec=2s
+          Restart=on-failure
+          StartLimitInterval=12s
+
+          [Install]
+          WantedBy=multi-user.target
+      notify:
+        - restart dhcpd6
+
+    - name: "dhcpd: start and enable dhcpd unit on br90 interface (IPv6)"
+      ansible.builtin.systemd:
+        name: dhcpd6@br90
+        enabled: true
+        state: started
     ## END DHCP
 
     ## radvd
@@ -623,6 +712,11 @@
     - name: restart dhcpd
       ansible.builtin.systemd:
         name: dhcpd4@br90
+        state: restarted
+
+    - name: restart dhcpd6
+      ansible.builtin.systemd:
+        name: dhcpd6@br90
         state: restarted
 
     - name: Restart radvd
