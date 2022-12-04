@@ -20,6 +20,9 @@ nftables_tables:
             statement: "iifname lo accept"
             comment: "allow from loopback"
           - position: 2
+            statement: "iifname \"br90\" accept"
+            comment: "allow from ffp domain 90"
+          - position: 8
             statement: "ct state invalid drop"
             comment: "early drop of invalid connections"
           - position: 10
