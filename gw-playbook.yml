@@ -652,6 +652,113 @@
         state: started
     ## END DHCP
 
+    ## Bind
+    - name: Install bind package
+      ansible.builtin.package:
+        name: bind9
+
+    - name: Create ffp zone file
+      ansible.builtin.copy:
+        dest: /etc/bind/db.ffp
+        owner: root
+        group: root
+        mode: "0644"
+        content: |
+          $ORIGIN ffp.
+          $TTL 5m
+          ffp.     IN    SOA     ffp. info.freifunk-potsdam.de. (
+                                    2022121102    ; serial
+                                    4h            ; refresh
+                                    15m           ; retry
+                                    8h            ; expire
+                                    4m)           ; negative caching TTL
+          @               IN  NS    ns.ffp.
+          gw.ffp.         IN  A     10.22.8.1
+          gw.ffp.         IN  AAAA  fd28:a735:685c:0:10ac:baff:fe38:befc
+          ns.ffp.         IN  A     10.22.8.1
+          ns.ffp.         IN  AAAA  fd28:a735:685c:0:10ac:baff:fe38:befc
+          nextnode.ffp.   IN  A     10.22.8.2
+          nextnode.ffp.   IN  AAAA  fd28:a735:685c::1
+          nn.ffp.         IN  A     10.22.8.2
+          nn.ffp.         IN  AAAA  fd28:a735:685c::1
+      notify:
+        - Restart bind
+
+    - name: Create ffp reverse file (IPv4)
+      ansible.builtin.copy:
+        dest: /etc/bind/22.10.in-addr.arpa
+        owner: root
+        group: root
+        mode: "0644"
+        content: |
+          $TTL 5m
+          @         IN    SOA     ffp. info.freifunk-potsdam.de. (
+                                    2022121104    ; serial
+                                    4h            ; refresh
+                                    15m           ; retry
+                                    8h            ; expire
+                                    4m)           ; negative caching TTL
+          @               IN  NS    ns.ffp.
+          1.8             IN  PTR   gw.ffp.
+          2.8             IN  PTR   nextnode.ffp.
+      notify:
+        - Restart bind
+
+    # Subnet:   fd28:a735:685c::
+    # Nextnode: fd28:a735:685c::1
+    # Gateway:  fd28:a735:685c::3c0e:ecff:fe29:4b62/64
+    - name: Create ffp reverse file (IPv6)
+      ansible.builtin.copy:
+        dest: /etc/bind/c.5.8.6.5.3.7.a.8.2.d.f.ip6.arpa
+        owner: root
+        group: root
+        mode: "0644"
+        content: |
+          $TTL 5m
+          @         IN    SOA     ffp. info.freifunk-potsdam.de. (
+                                    2022121106    ; serial
+                                    4h            ; refresh
+                                    15m           ; retry
+                                    8h            ; expire
+                                    4m)           ; negative caching TTL
+          @               IN  NS    ns.ffp.
+          ; fd28:a735:685c::3c0e:ecff:fe29:4b62/64
+          2.6.b.4.9.2.e.f.f.f.c.e.e.0.c.3.0.0.0.0   IN  PTR   gw.ffp.
+          1.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0   IN  PTR   nextnode.ffp.
+      notify:
+        - Restart bind
+
+
+    - name: Create ffp zone config file
+      ansible.builtin.copy:
+        dest: /etc/bind/named.conf.ffp-zones
+        owner: root
+        group: root
+        mode: "0644"
+        content: |
+          zone "ffp" {
+            type master;
+            file "/etc/bind/db.ffp";
+          };
+          zone "22.10.in-addr.arpa" {
+            type master;
+            file "/etc/bind/22.10.in-addr.arpa";
+          };
+          zone "c.5.8.6.5.3.7.a.8.2.d.f.ip6.arpa" {
+            type master;
+            file "/etc/bind/c.5.8.6.5.3.7.a.8.2.d.f.ip6.arpa";
+          };
+      notify:
+        - Restart bind
+
+    - name: Add include for config
+      ansible.builtin.lineinfile:
+        path: /etc/bind/named.conf
+        line: include "/etc/bind/named.conf.ffp-zones";
+      notify:
+        - Restart bind
+    ## END: Bind
+
     ## radvd
     - name: Install package
       ansible.builtin.package:
@@ -722,4 +829,9 @@
     - name: Restart radvd
       ansible.builtin.service:
         name: radvd
+        state: restarted
+
+    - name: Restart bind
+      ansible.builtin.service:
+        name: bind9
         state: restarted
