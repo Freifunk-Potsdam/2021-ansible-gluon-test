@@ -164,11 +164,11 @@
 
           [Network]
           DHCP=yes
-          RouteMetric=1024
 
           # add routes into "ffup" routing table
           [DHCPv4]
           RouteTable=200
+          RouteMetric=1024
 
           # add the policy route
           [RoutingPolicyRule]
@@ -236,7 +236,6 @@
 
           [Network]
           Bridge=br90
-          BatmanAdvanced=br90
       notify:
         - restart systemd-networkd
 
