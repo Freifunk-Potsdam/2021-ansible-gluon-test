@@ -164,6 +164,7 @@
 
           [Network]
           DHCP=yes
+          Tunnel=he-ipv6
 
           # add routes into "ffup" routing table
           [DHCPv4]
@@ -202,6 +203,89 @@
         name: tunneldigger-ffup.service
         state: restarted
     ## tunneldigger END
+
+    # IPv6 HE.net Tunnel
+    - name: "Systemd-networkd; Create default interface configuration"
+      ansible.builtin.copy:
+        dest: /etc/systemd/network/10-default.network
+        owner: root
+        group: root
+        mode: "0644"
+        content: |
+          # Same configuration as in /etc/netplan/50-cloud-init.yaml but with
+          # Tunnel option in Network section. Netplan configuration is not
+          # needed and redundant. This is only used to bring up the he-ipv6
+          # tunnel.
+          [Match]
+          MACAddress=0a:d6:bf:d3:30:81
+
+          [Network]
+          Address=202.61.249.142/22
+          Gateway=202.61.248.1
+          Address=2a03:4000:54:ec8:8d6:bfff:fed3:3081/64
+          Gateway=fe80::1
+
+          DNS=2a03:4000:0:1::e1e6
+          DNS=2a03:4000:8000::fce6
+          DNS=46.38.225.230
+          DNS=46.38.252.230
+
+          Tunnel=he-ipv6
+
+    - name: "Systemd-networkd: HE.net tunnel device"
+      ansible.builtin.copy:
+        dest: /etc/systemd/network/40-he-ipv6.netdev
+        owner: root
+        group: root
+        mode: "0644"
+        content: |
+          # A virtual network device is only created if the [Match] section
+          # matches the current environment, or if the section is empty.
+          [Match]
+
+          [NetDev]
+          Description=HE.net Tunnelbroker sit device
+          Name=he-ipv6
+          Kind=sit
+          MTUBytes=1480
+
+          [Tunnel]
+          Local=202.61.249.142
+          Remote=216.66.80.30
+          TTL=255
+      notify:
+        - restart systemd-networkd
+
+    - name: "Systemd-networkd: HE.net tunnel network"
+      ansible.builtin.copy:
+        dest: /etc/systemd/network/40-he-ipv6.network
+        owner: root
+        group: root
+        mode: "0644"
+        content: |
+          [Match]
+          Name=he-ipv6
+
+          [Network]
+          Address=2001:470:1f0a:ba::2/64
+
+          IPForward=true
+
+          # only route subnet traffic via he ipv6 tunnel
+          [Route]
+          Source=2001:470:7042::/48
+          Gateway=2001:470:1f0a:ba::1
+
+          # add the policy route
+          [RoutingPolicyRule]
+          Table=200
+          IncomingInterface=br90
+          Priority=10000
+      notify:
+        - restart systemd-networkd
+
+    # END: IPv6 HE.net Tunnel
+
 
     ## bat/br network devices
     - name: "systemd-networkd: BATMAN netdev for domain 90"
@@ -269,6 +353,7 @@
           ; 255.255.248.0
           Address=10.22.8.1/21
           Address=fd28:a735:685c::3c0e:ecff:fe29:4b62/64
+          Address=2001:470:7042:90:3c0e:ecff:fe29:4b62/64
 
           [RoutingPolicyRule]
           Table=local
@@ -581,12 +666,22 @@
           # Enable RFC 5007 support (same than for DHCPv4)
           allow leasequery;
 
-          subnet6 fd28:a735:685c::/64 {
-            interface br90;
-            range6 fd28:a735:685c::ffff fd28:a735:685c::ffff:ffff;
+          # subnet6 fd28:a735:685c::/64 {
+          #   interface br90;
+          #   range6 fd28:a735:685c::ffff fd28:a735:685c::ffff:ffff;
 
-            option dhcp6.name-servers fd28:a735:685c::1;
-            #option dhcp6.domain-search "ffp";
+          #   option dhcp6.name-servers fd28:a735:685c::1;
+          #   #option dhcp6.domain-search "ffp";
+          # }
+          subnet6 2001:470:7042:90::/64 {
+            interface br90;
+            range6 2001:470:7042:90::ffff 2001:470:7042:90::ffff:ffff;
+
+            option dhcp6.name-servers
+              fd28:a735:685c::1,
+              fd28:a735:685c::3c0e:ecff:fe29:4b62,
+              2001:470:7042:90:3c0e:ecff:fe29:4b62;
+            option dhcp6.domain-search "ffp";
           }
       notify:
         - restart dhcpd6
@@ -773,16 +868,23 @@
           interface br90 {
               AdvSendAdvert on;
               IgnoreIfMissing on;
-              AdvManagedFlag off;
+              AdvManagedFlag on;
               AdvOtherConfigFlag on;
-              MaxRtrAdvInterval 200;
+              # https://forum.netgate.com/topic/163940/wireless-clients-lose-ipv6-gateway/24
+              # MaxRtrAdvInterval 200;
+              MaxRtrAdvInterval 1800;
               AdvLinkMTU 1280;
               prefix fd28:a735:685c::/64 {
                   AdvOnLink on;
                   AdvAutonomous on;
-                  AdvRouterAddr on;
+                  # AdvRouterAddr on;
               };
-              RDNSS fd28:a735:685c::1 {
+              prefix 2001:470:7042:90::/64 {
+                  AdvOnLink on;
+                  AdvAutonomous on;
+                  # AdvRouterAddr on;
+              };
+              RDNSS fd28:a735:685c::1 fd28:a735:685c::3c0e:ecff:fe29:4b62 2001:470:7042:90:3c0e:ecff:fe29:4b62 {
               };
           };
       notify:
