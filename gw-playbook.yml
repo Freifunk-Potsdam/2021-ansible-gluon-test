@@ -349,9 +349,9 @@
           Name=br90
 
           [Network]
-          ; 10.22.8.1 - 10.0.15.254
-          ; 255.255.248.0
-          Address=10.22.8.1/21
+          ; 10.22.0.0/20 -> 10.22.0.1 - 10.22.15.255
+          ; 255.255.240.0
+          Address=10.22.0.1/20
           Address=fd28:a735:685c::3c0e:ecff:fe29:4b62/64
           Address=2001:470:7042:90:3c0e:ecff:fe29:4b62/64
 
@@ -577,12 +577,12 @@
 
           authoritative;
 
-          subnet 10.22.8.0 netmask 255.255.248.0 {
+          subnet 10.22.0.0 netmask 255.255.240.0 {
             interface br90;
-            range 10.22.9.0 10.22.10.255;
+            range 10.22.4.0 10.22.7.255;
 
-            option routers 10.22.8.1;
-            option domain-name-servers 10.22.8.1;
+            option routers 10.22.0.1;
+            option domain-name-servers 10.22.0.1;
           }
       notify:
         - restart dhcpd
@@ -767,13 +767,13 @@
                                     8h            ; expire
                                     4m)           ; negative caching TTL
           @               IN  NS    ns.ffp.
-          gw.ffp.         IN  A     10.22.8.1
-          gw.ffp.         IN  AAAA  fd28:a735:685c:0:10ac:baff:fe38:befc
-          ns.ffp.         IN  A     10.22.8.1
-          ns.ffp.         IN  AAAA  fd28:a735:685c:0:10ac:baff:fe38:befc
-          nextnode.ffp.   IN  A     10.22.8.2
+          gw1.ffp.        IN  A     10.22.0.1
+          gw1.ffp.        IN  AAAA  fd28:a735:685c:0:10ac:baff:fe38:befc
+          ns1.ffp.        IN  A     10.22.0.1
+          ns1.ffp.        IN  AAAA  fd28:a735:685c:0:10ac:baff:fe38:befc
+          nextnode.ffp.   IN  A     10.22.0.255
           nextnode.ffp.   IN  AAAA  fd28:a735:685c::1
-          nn.ffp.         IN  A     10.22.8.2
+          nn.ffp.         IN  A     10.22.0.255
           nn.ffp.         IN  AAAA  fd28:a735:685c::1
       notify:
         - Restart bind

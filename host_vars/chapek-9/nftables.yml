@@ -78,7 +78,7 @@ nftables_tables:
         rules:
             # use oifname since the interface may not be up / present when the rules are applied
           - position: 1
-            statement: "ip saddr 10.22.8.0/21 oifname \"ffup\" counter masquerade"
+            statement: "ip saddr 10.22.0.0/20 oifname \"ffup\" counter masquerade"
             comment: "masquerade ipv4 ffp client traffic"
           - position: 2
             statement: "ip6 saddr fd28:a735:685c::/64 oif \"eth0\" counter masquerade"
