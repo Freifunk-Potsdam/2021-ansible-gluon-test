@@ -766,7 +766,7 @@
                                     15m           ; retry
                                     8h            ; expire
                                     4m)           ; negative caching TTL
-          @               IN  NS    ns.ffp.
+          @               IN  NS    ns1.ffp.
           gw1.ffp.        IN  A     10.22.0.1
           gw1.ffp.        IN  AAAA  fd28:a735:685c:0:10ac:baff:fe38:befc
           ns1.ffp.        IN  A     10.22.0.1
@@ -792,9 +792,9 @@
                                     15m           ; retry
                                     8h            ; expire
                                     4m)           ; negative caching TTL
-          @               IN  NS    ns.ffp.
-          1.8             IN  PTR   gw.ffp.
-          2.8             IN  PTR   nextnode.ffp.
+          @               IN  NS    ns1.ffp.
+          0.1             IN  PTR   gw1.ffp.
+          0.255           IN  PTR   nextnode.ffp.
       notify:
         - Restart bind
 
@@ -817,7 +817,7 @@
                                     4m)           ; negative caching TTL
           @               IN  NS    ns.ffp.
           ; fd28:a735:685c::3c0e:ecff:fe29:4b62/64
-          2.6.b.4.9.2.e.f.f.f.c.e.e.0.c.3.0.0.0.0   IN  PTR   gw.ffp.
+          2.6.b.4.9.2.e.f.f.f.c.e.e.0.c.3.0.0.0.0   IN  PTR   gw1.ffp.
           1.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0   IN  PTR   nextnode.ffp.
       notify:
         - Restart bind
