@@ -1,0 +1,18 @@
+---
+# handlers file for fastd_server
+
+- name: Systemd daemon reload
+  ansible.builtin.systemd:
+    daemon_reload: true
+
+- name: Restart fastd
+  ansible.builtin.systemd:
+    name: "fastd@{{ item }}"
+    state: restarted
+  loop: "{{ domains | flatten }}"
+  loop_control:
+    index_var: idx
+  when: (fastd_generated_keypair.results[idx].changed
+        or fastd_config.results[idx].changed
+        or fastd_dummy_peer.results[idx].changed)
+        and not ansible_check_mode

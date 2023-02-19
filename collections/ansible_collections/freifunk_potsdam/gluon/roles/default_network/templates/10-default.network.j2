@@ -1,0 +1,34 @@
+# {{ ansible_managed }}
+
+[Match]
+{% for item, value in default_network_match.items() %}
+{{ item }}={{ value }}
+{% endfor %}
+
+[Network]
+{% if default_network_ipv4_address is defined and default_network_ipv4_address | length %}
+Address={{ default_network_ipv4_address }}
+{% endif %}
+{% if default_network_ipv4_gateway is defined and default_network_ipv4_gateway | length %}
+Gateway={{ default_network_ipv4_gateway }}
+{% endif %}
+{% if default_network_ipv6_address is defined and default_network_ipv6_address | length %}
+Address={{ default_network_ipv6_address }}
+{% endif %}
+{% if default_network_ipv6_gateway is defined and default_network_ipv6_gateway | length %}
+Gateway={{ default_network_ipv6_gateway }}
+{% endif %}
+
+{% if default_network_dns_servers is defined %}
+{% for dns_server in default_network_dns_servers %}
+DNS={{ dns_server }}
+{% endfor %}
+{% endif %}
+
+{% if default_network_network_section_extra_options is defined and default_network_network_section_extra_options | length %}
+{% for extra_options in default_network_network_section_extra_options %}
+{% for item, value in extra_options.items() %}
+{{ item }}={{ value }}
+{% endfor %}
+{% endfor %}
+{% endif %}

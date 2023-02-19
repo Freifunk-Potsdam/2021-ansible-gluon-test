@@ -1,0 +1,11 @@
+---
+policy_routing_default_uplink_table_value: 200
+policy_routing_default_uplink_table_name: ffup
+
+# Settings for tunneldigger-client network file
+policy_routing_default_uplink_route_metric: 1024
+policy_routing_default_uplink_priority: 10000
+
+policy_routing_routing_tables:
+  - value: "{{ policy_routing_default_uplink_table_value }}"
+    name: "{{ policy_routing_default_uplink_table_name }}"

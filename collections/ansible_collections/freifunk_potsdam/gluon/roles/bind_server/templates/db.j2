@@ -1,0 +1,14 @@
+; {{ ansible_managed }} 
+$TTL {{ bind_server_zones[item].ttl | default('2d') }}
+$ORIGIN {{ item }}.
+@       IN      SOA     ns1.{{ item }}. {{ bind_server_zones[item].hostmaster | default('hostmaster.' + item + '.') }} (
+                        {{ bind_server_zones[item].serial }}
+                        {{ bind_server_zones[item].refresh | default('12h') }}
+                        {{ bind_server_zones[item].update_retry | default('15m') }}
+                        {{ bind_server_zones[item].expiry | default('3w') }}
+                        {{ bind_server_zones[item].minimum | default('2h') }}
+                        )
+;
+{% for record in bind_server_zones[item].records %}
+{{ record.name }}   {{ record.type }}    {{ record.value }}
+{% endfor %}

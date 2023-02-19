@@ -1,0 +1,16 @@
+---
+- name: "Reload systemd daemon"
+  ansible.builtin.systemd:
+    daemon_reload: true
+
+- name: "Re/start tunneldigger client service"
+  when: not ansible_check_mode
+  ansible.builtin.systemd:
+    enabled: true
+    name: "{{ tunneldigger_client_service_file_base_name | default('tunneldigger-client') }}.service"
+    state: restarted
+
+- name: "Restart systemd-networkd"
+  ansible.builtin.systemd:
+    service: Systemd-networkd
+    state: restarted

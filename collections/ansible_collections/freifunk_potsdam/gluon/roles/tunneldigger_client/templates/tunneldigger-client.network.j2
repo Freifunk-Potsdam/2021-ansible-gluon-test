@@ -1,0 +1,23 @@
+# {{ ansible_managed }}
+
+[Match]
+Name={{ tunneldigger_client_ifname }}
+
+[Network]
+DHCP=yes
+# TODO: Check if requierd here?! It is defined in 10-default-network…
+#       Also check and use var if used
+# Tunnel=he-ipv6
+
+# add routes into "{{ policy_routing_default_uplink_table_name }}" routing table
+[DHCPv4]
+RouteTable={{ policy_routing_default_uplink_table_value }}
+RouteMetric={{ policy_routing_default_uplink_route_metric }}
+
+{% for domain in domains %}
+[RoutingPolicyRule]
+Table={{ policy_routing_default_uplink_table_value }}
+IncomingInterface=br{{ domain }}
+Priority={{ policy_routing_default_uplink_priority }}
+
+{% endfor %}

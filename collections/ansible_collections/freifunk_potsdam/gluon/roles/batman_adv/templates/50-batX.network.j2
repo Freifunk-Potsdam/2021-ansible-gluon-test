@@ -1,0 +1,8 @@
+# {{ ansible_managed }}
+# BATMAN network for domain '{{ item }}' ({{ domains[item].name }})
+
+[Match]
+Name=bat{{ item }}
+
+[Network]
+Bridge=br{{ item }}

@@ -1,0 +1,12 @@
+---
+system_packages_install:
+  - htop
+  - iftop
+  - iotop
+  - mc
+  - ncdu
+  - nftables          # TODO: Role?
+  - sudo
+  - tmux
+  - vim
+  - zsh

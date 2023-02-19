@@ -1,0 +1,26 @@
+---
+- name: "Set net.ipv4.ip_forward: 1"
+  when: policy_routing_ipv4_forward
+  ansible.posix.sysctl:
+    reload: true
+    sysctl_file: "{{ policy_routing_sysctl_file }}"
+    state: present
+    name: net.ipv4.ip_forward
+    value: "1"
+
+# NOTE: Maybe be more specific for the interface(s)
+- name: "Set net.ipv6.conf.all.forwarding: 1"
+  when: policy_routing_ipv6_forward
+  ansible.posix.sysctl:
+    reload: true
+    sysctl_file: "{{ policy_routing_sysctl_file }}"
+    state: present
+    name: net.ipv6.conf.all.forwarding
+    value: "1"
+
+- name: "Add value/name pairs to /etc/iproute2/rt_tables"
+  loop: "{{ policy_routing_routing_tables }}"
+  ansible.builtin.lineinfile:
+    path: "/etc/iproute2/rt_tables"
+    regexp: "^{{ item.value }} "
+    line: "{{ item.value }} {{ item.name }}"

@@ -1,11 +1,12 @@
 ---
-administrative_users:
+users:
   - username: hannes
     password: "*"
     update_password: on_create
     groups:
       - systemd-journal
       - sudo
+    authorized_keys_exclusive: true
     authorized_keys:
       - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICZ14THlloupTncq14J51dVY25CvoJsLtxtNBrK1QIgp hannes@X570-A-JC17049246
       - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIK/o0ynbYtLCSI0T1LpLOq7ar4atOwmhwH/SQEY0RvKX hannes@Swift1-SF114-32
@@ -16,6 +17,7 @@ administrative_users:
     groups:
       - systemd-journal
       - sudo
+    authorized_keys_exclusive: true
     authorized_keys:
       - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDAHQUFccxGYu8KHwyJl2QNbc1qCC1HAUnOagOaoUgvSpVFuHRU4wTDzVi9HvJpr6cAqbdQdKuRkIe6LMlNZ83XJbAYlIUE2vI3mL24H1O9q4too2FN6owgNMe0jZVnbqKq7CuuUxGfwD4kpE64xikauOkh9OKFkvsss6ZitLghUGiVdgVJjjoXI5ZSdsMI8MR+lvKrXiorTyyi0pOx4E7zWDEYIHw3vaYkNgX8M4zCmfz7D3GFa1TVZjtnm5yrcrabtJHNun/WKDXkScS1bpCWa5Zb2mLLysxe0SFz6RhTTntuvPLcp1smWq+QahYX+UhhHMhgRSZ+CKLCbRNFa7R1 seth0r@Sia
   - username: tommy
@@ -24,5 +26,6 @@ administrative_users:
     groups:
       - systemd-journal
       - sudo
+    authorized_keys_exclusive: true
     authorized_keys:
       - ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEA1P5rR8xX1nNYHREb/upxiR/NPEPXjtniUi0No5WpBr+mYi5hmpPYn9Q6jBwsXIZ7OkwYAIBsnN9z6jg3atq+dIcA1jRB7FYwbtBoTTAa8SUjClncDfbSH0Mrp6R++u4zPSo24OdoaX4dD7m3VPnez8669mfVTL9j7aQOT+Jlwp3tOq0MSYRIyU6843bYF+et4z4seMj+hq9Y0wj5rODMXv6zMwQQGo87CiaoqMs5RBI9gXdRs6/9fDRHsJhQEz6SU/BD/9bkhmg1tjils6C2IpmsiNMY3MNvLYxi3S6L4WUgDGw5Ggk1TcBRyaL+5O2QhPgrLA6TEhbx8UuzhVTNnQ== tommy@tommylap

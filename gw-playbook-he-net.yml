@@ -1,0 +1,32 @@
+---
+- hosts:
+    - ffp-gw-he-net
+
+  collections:
+    - devsec.hardening
+    - freifunk_potsdam.gluon
+
+  roles:
+    - weareinteractive.users
+    - Frzk.nftables
+    - stuvusit.systemd-journald
+    - hafu.systemd_timesyncd
+    - ssh_hardening
+    # collection: freifunk_potsdam.gluon
+    - system_packages
+    - qemu_guest
+    - default_network
+    - policy_routing
+    - tunneldigger_client
+    - he_net_tunnel
+    - batman_adv
+    - fastd_server
+    - isc_dhcp_server
+    - bind_server
+    - radvd
+
+  pre_tasks: []
+
+  tasks: []
+
+  handlers: []

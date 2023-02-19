@@ -1,0 +1,7 @@
+# {{ ansible_managed }}
+
+[NetDev]
+; attach batman and client tunnel endpoints her
+Description="Bridge interface for domain '{{ item }}' ({{ domains[item].name }})"
+Name=br{{ item }}
+Kind=bridge

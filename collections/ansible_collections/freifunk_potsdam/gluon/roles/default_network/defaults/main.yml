@@ -1,0 +1,9 @@
+---
+# defaults file for default_network
+default_network_match: []
+# default_network_ipv4_address:
+# default_network_ipv4_gateway:
+# default_network_ipv6_address:
+# default_network_ipv6_gateway:
+# default_network_dns_servers: []
+# default_network_network_section_extra_options: []

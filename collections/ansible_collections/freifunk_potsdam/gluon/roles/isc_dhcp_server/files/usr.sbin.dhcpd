@@ -1,0 +1,3 @@
+/etc/dhcpd/** r,
+/var/lib/dhcp/dhcpd{,6}-br*.leases* lrw,
+/{,var/}run/{,dhcp-server/}dhcpd{,6}-br*.pid rw,

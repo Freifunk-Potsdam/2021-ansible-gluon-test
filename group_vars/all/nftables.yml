@@ -1,0 +1,117 @@
+---
+
+nftables_primary_interface: "{{ ansible_default_ipv4.interface }}"
+nftables_default_ipv4_addr: "{{ ansible_default_ipv4.address | default(ansible_all_ipv4_addresses[0]) }}"
+nftables_default_ipv6_addr: "{{ ansible_default_ipv6.address | default(ansible_all_ipv6_addresses[0]) }}"
+
+nftables_config_file: /etc/nftables.conf
+nftables_tables:
+  - name: filter
+    family: inet
+    chains:
+      - name: "input"
+        base:
+          type: "filter"
+          hook: "input"
+          priority: 0
+          policy: "drop"
+        rules:
+          - position: 1
+            statement: "iifname lo accept"
+            comment: "allow from loopback"
+          - position: 2
+            statement: "iifname \"br0\" accept"
+            comment: "allow from ffp domain 0"
+          - position: 3
+            statement: "iifname \"br16\" accept"
+            comment: "allow from ffp domain 16"
+          - position: 8
+            statement: "ct state invalid drop"
+            comment: "early drop of invalid connections"
+          - position: 10
+            statement: "ip protocol icmp icmp type echo-request limit rate 10/second burst 3 packets accept"
+            comment: "allow icmp echo request (IPv4)"
+          - position: 11
+            statement: "counter ip protocol icmp icmp type echo-request drop"
+            comment: "count dropped icmp echo requests"
+          - position: 12
+            statement: "ip6 nexthdr icmpv6 icmpv6 type echo-request limit rate 10/second burst 3 packets accept"
+            comment: "allow icmpv6 echo request"
+          - position: 13
+            statement: "counter ip6 nexthdr icmpv6 icmpv6 type echo-request drop"
+            comment: "count dropped icmpv6 echo requests"
+          - position: 20
+            statement: "ct state {established, related} accept"
+            comment: "allow established/related connections"
+          - position: 30
+            statement: "ip protocol icmp icmp type \
+                        {destination-unreachable, router-solicitation, router-advertisement, time-exceeded, parameter-problem} accept"
+            comment: "allow icmp (IPv4)"
+          - position: 31
+            statement: "ip6 nexthdr icmpv6 icmpv6 type {destination-unreachable, packet-too-big, time-exceeded, parameter-problem, \
+                        mld-listener-query, mld-listener-report, mld-listener-reduction, nd-router-solicit, nd-router-advert, \
+                        nd-neighbor-solicit, nd-neighbor-advert, ind-neighbor-solicit, ind-neighbor-advert, mld2-listener-report} accept"
+            comment: "allow icmpv6"
+          # - position: 32
+          #   statement: "ip6 daddr fe80::/64 udp dport 546 ct state new iif \"{{ nftables_primary_interface }}\" accept"
+          #   comment: "allow DHCPv6 client"
+          - position: 50
+            # statement: "tcp dport {22, 2424} ct state new limit rate 15/minute accept"
+            statement: "tcp dport 2424 ct state new limit rate 3/minute accept"
+            comment: "allow ssh"
+          - position: 60
+            statement: "udp dport 10000 ct state new accept"
+            comment: "allow fastd tunnel ingress (domain 0)"
+          - position: 61
+            statement: "udp dport 10016 ct state new accept"
+            comment: "allow fastd tunnel ingress (domain 16)"
+          - position: 70
+            statement: "udp dport {20012, 20013, 20021, 20023, 20031, 20032} ct state new accept"
+            comment: "used for l2tp gw2gw links"
+          - position: 100
+            statement: "counter reject with icmpx type port-unreachable"
+            comment: "reject everything else politely"
+      - name: "forward"
+        base:
+          type: "filter"
+          hook: "forward"
+          priority: "filter"
+          policy: "accept"
+        rules:
+          - position: 10
+            statement: "oifname \"ffup\" tcp flags syn tcp option maxseg size set 1324 counter"
+            comment: "MSS Clamping for outgoing IPv4 traffic (ffup is only IPv4)"
+          - position: 11
+            statement: "iifname \"ffup\" tcp flags syn tcp option maxseg size set 1324 counter"
+            comment: "MSS Clamping for incoming IPv4 traffic (ffup is only IPv4)"
+      - name: "output"
+        base:
+          type: "filter"
+          hook: "output"
+          priority: 0
+  - name: nat
+    family: inet  # or ip
+    chains:
+      - name: postrouting
+        base:
+          type: "nat"
+          hook: "postrouting"
+          priority: "srcnat"
+          policy: "accept"
+        rules:
+            # use oifname since the interface may not be up / present when the rules are applied
+          - position: 1
+            statement: "ip saddr 10.22.0.0/20 oifname \"ffup\" counter masquerade"
+            comment: "masquerade ipv4 ffp client traffic (domain 0)"
+          - position: 2
+            statement: "ip saddr 10.22.16.0/22 oifname \"ffup\" counter masquerade"
+            comment: "masquerade ipv4 ffp client traffic (domain 16)"
+          - position: 20
+            statement: "ip6 saddr fdc0:ffee:0a10::/64 oif \"{{ nftables_primary_interface }}\" counter masquerade"
+            comment: "masquerade ipv6 ffp client traffic via link local (domain 0)"
+          - position: 21
+            statement: "ip6 saddr fdc0:ffee:0a10:10::/64 oif \"{{ nftables_primary_interface }}\" counter masquerade"
+            comment: "masquerade ipv6 ffp client traffic via link local (domain 16)"
+          - position: 29
+            statement: "ip6 saddr fd28:a735:685c::/64 oif \"{{ nftables_primary_interface }}\" counter masquerade"
+            comment: "masquerade ipv6 ffp client traffic via link local (domain 0 old ULA)"

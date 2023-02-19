@@ -1,0 +1,43 @@
+---
+domains:
+  "0":
+    name: "Potsdam-Stadt"
+    batman_adv_gw_bandwidth_down: 100M
+    batman_adv_gw_bandwidth_up: 100M
+    batman_adv_routing_algorithm: batman-iv
+    prefix4: 10.22.0.0/20
+    prefix6: fd28:a735:685c::/64  # OLD!
+    extra_prefixes6:
+      - fdc0:ffee:0a10::/64       # NEW!
+      - 2001:470:7042::/64        # NEW!
+      - 2001:470:7042:90::/64     # OLD!
+    #prefix6_dhcp: …              # choose one or defaults prefix6
+    # default: policy_routing_default_uplink_priority (1000) + 10
+    #policy_routing_priority: 10010
+    # NOTE: 2024, 2^10: 10.22.0.0/20 → 10.22.4.0
+    #       Used for DHCP range calculation, multiplied by gw_number
+    #       gw 1: 1024 * 1 → 10.22.4.0
+    #       gw 2: 1024 * 2 → 10.22.8.0
+    dhcp_v4_offset: 1024
+    #ipv4_next_node_offset: 255
+    #ipv6_next_node_offset: 65535  # ffff, default 1
+    #fastd_mtu: …                       # default 1312, may use 1406?
+    #fastd_log_level: warn|debug|info   # default info
+    # old 10090 port
+    fastd_extra_binds:
+     - '{{ ansible_default_ipv4.address }}:10090 interface "{{ ansible_default_ipv4.interface }}"'
+     - '[{{ ansible_default_ipv6.address }}]:10090 interface "{{ ansible_default_ipv6.interface }}"'
+    # NEVER COMMIT SECRET KEYS!!!
+    # fastd_secret_key: "…"
+    # fastd_public_key: "49a1…"
+  "16":
+    name: "Potsdam-Umland"
+    batman_adv_gw_bandwidth_down: 100M
+    batman_adv_gw_bandwidth_up: 100M
+    batman_adv_routing_algorithm: batman-iv
+    prefix4: 10.22.16.0/22
+    prefix6: fdc0:ffee:0a10:10::/64
+    extra_prefixes6:
+      - 2001:470:7042:10::/64
+    dhcp_v4_offset: 256
+    #ipv4_next_node_offset: 255

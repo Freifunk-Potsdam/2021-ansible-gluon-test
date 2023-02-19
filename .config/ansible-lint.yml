@@ -1,0 +1,10 @@
+---
+
+# 1. exclude tests b/c:
+# syntax-check[specific]: the role 'batman_adv' was not found in ...
+# Do not know how to fix for now
+#
+# 2. exclude ansible roles dir not maintained by us
+exclude_paths:
+  - collections/ansible_collections/freifunk_potsdam/gluon/roles/*/tests
+  - .ansible

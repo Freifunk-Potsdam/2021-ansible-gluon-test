@@ -1,0 +1,31 @@
+# {{ ansible_managed }}
+
+[Match]
+Name=he-ipv6
+
+[Network]
+Address={{ he_net_tunnel_local_ipv6 }}
+
+IPForward=true
+
+{% if he_net_tunnel_prefixes | length > 0 %}
+# only route subnet traffic via he ipv6 tunnel
+{% for prefix in he_net_tunnel_prefixes %}
+[Route]
+Source={{ prefix }}
+Gateway={{ he_net_tunnel_remote_ipv6 }}
+
+{% endfor %}
+{% endif %}
+{% if domains %}
+# add the policy route for domains
+{% for domain in domains %}
+[RoutingPolicyRule]
+Table={{ policy_routing_default_uplink_table_value | default('default') }}
+IncomingInterface=br{{ domain }}
+{% if policy_routing_default_uplink_priority %}
+Priority=10000
+{% endif %}
+
+{% endfor %}
+{% endif %}

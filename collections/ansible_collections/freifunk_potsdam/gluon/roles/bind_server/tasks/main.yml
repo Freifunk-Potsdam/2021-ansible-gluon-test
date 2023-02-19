@@ -1,0 +1,46 @@
+---
+# tasks file for bind_server
+
+- name: Install bind
+  ansible.builtin.package:
+    name: bind9
+    state: present
+
+- name: Copy options
+  ansible.builtin.template:
+    src: named.conf.options.j2
+    dest: /etc/bind/named.conf.options
+    owner: root
+    group: bind
+    mode: "0644"
+  notify:
+    - Restart bind
+
+- name: Copy local zones
+  ansible.builtin.template:
+    src: named.conf.local.j2
+    dest: /etc/bind/named.conf.local
+    owner: root
+    group: bind
+    mode: "0644"
+  notify:
+    - Restart bind
+
+- name: Create zone files
+  ansible.builtin.template:
+    src: db.j2
+    dest: /etc/bind/db.{{ item }}
+    owner: root
+    group: bind
+    mode: "0644"
+  loop: "{{ bind_server_zones | flatten }}"
+  when: bind_server_zones[item].type | default('primary') == "primary"
+  notify:
+    - Restart bind
+
+# ignor no-changed-when, want to verify the zone file and fail if not valid
+- name: Check zones  # noqa: no-changed-when
+  ansible.builtin.command:
+    cmd: named-checkzone {{ item }} /etc/bind/db.{{ item }}
+  loop: "{{ bind_server_zones | flatten }}"
+  when: not ansible_check_mode and bind_server_zones[item].type | default('primary') == "primary"

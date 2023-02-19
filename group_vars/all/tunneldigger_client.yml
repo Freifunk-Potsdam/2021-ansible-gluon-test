@@ -1,0 +1,17 @@
+---
+# TODO: tunneldigger-ffup → tunneldigger-client-ffup
+tunneldigger_client_service_file_base_name: tunneldigger-ffup
+# NOTE: when renaming the interface, make sure to remove the unit files of the
+#       old name
+tunneldigger_client_ifname: ffup
+# "a" → select broker based on use
+# "g" → select first available broker to connect to (default)
+# "r" → select a random broker
+tunneldigger_client_broker_selection: a
+tunneldigger_client_brokers:
+  - a.tunnel.berlin.freifunk.net:8942
+  - b.tunnel.berlin.freifunk.net:8942
+  - c.tunnel.berlin.freifunk.net:8942
+  - d.tunnel.berlin.freifunk.net:8942
+  # - e.tunnel.berlin.freifunk.net:8942
+  # - f.tunnel.berlin.freifunk.net:8942

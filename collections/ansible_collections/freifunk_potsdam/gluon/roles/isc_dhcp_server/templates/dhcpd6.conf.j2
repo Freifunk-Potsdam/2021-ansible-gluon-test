@@ -1,0 +1,21 @@
+# {{ ansible_managed }}
+# DHCPv6 configuration for domain '{{ item }}' ({{ domains[item].name }})
+
+default-lease-time 1800;
+max-lease-time 43200;
+
+# Enable RFC 5007 support (same than for DHCPv4)
+allow leasequery;
+
+{% set default_prefix6 = domains[item].prefix6_dhcp | default(domains[item].prefix6) %}
+
+subnet6 {{ default_prefix6 }} {
+    interface br{{ item }};
+{# NOTE: Calculate stable ranges based on gw number ::gw_number:1:0 - ::gw_number:ffff:ffff #}
+    range6 {{ default_prefix6 | ansible.utils.ipmath((4294967296 * gw_number) + 65536) }} {{ default_prefix6 | ansible.utils.ipmath((4294967296 * gw_number) + 4294967295) }};
+
+    option dhcp6.name-servers
+        # only use next node address, or resolution of next node address does not work
+        {{ default_prefix6 | ansible.utils.ipmath(domains[item].ipv6_next_node_offset | default(1)) }};
+    option dhcp6.domain-search "ffp";
+}

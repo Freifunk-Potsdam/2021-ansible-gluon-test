@@ -1,0 +1,22 @@
+---
+# tasks file for he_net_tunnel
+
+- name: "Systemd-networkd: create HE.net tunnel device file"
+  ansible.builtin.template:
+    src: 40-he-net-ipv6-tunnel.netdev.j2
+    dest: /etc/systemd/network/40-he-ipv6.netdev
+    mode: "0644"
+    owner: root
+    group: root
+  notify:
+    - Restart systemd-networkd
+
+- name: "Systemd-networkd: create HE.net tunnel network file"
+  ansible.builtin.template:
+    src: 40-he-net-ipv6-tunnel.network.j2
+    dest: /etc/systemd/network/40-he-ipv6.network
+    mode: "0644"
+    owner: root
+    group: root
+  notify:
+    - Restart systemd-networkd

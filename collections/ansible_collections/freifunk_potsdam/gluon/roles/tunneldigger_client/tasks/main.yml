@@ -1,0 +1,63 @@
+---
+- name: Check if brokers are set
+  when: not tunneldigger_client_brokers
+  ansible.builtin.fail:
+    msg: "tunneldigger_client_brokers var must contain at least one broker!"
+
+- name: Install build packages
+  when: tunneldigger_client_build_packages
+  ansible.builtin.package:
+    name: "{{ tunneldigger_client_build_packages }}"
+    state: present
+
+- name: Checkout tunneldigger code
+  when: not ansible_check_mode
+  register: tunneldigger_client_source_checkout
+  ansible.builtin.git:
+    repo: "{{ tunneldigger_client_source_repository }}"
+    dest: "{{ tunneldigger_client_source_dest }}"
+    version: "{{ tunneldigger_client_source_version | default('master') }}"
+
+# NOTE: Running the following tasks as root are a security risk!
+- name: "Run cmake (client)"   # noqa: no-handler
+  when: tunneldigger_client_source_checkout.changed
+  register: tunneldigger_client_cmake_output
+  # running cmake always changes files
+  changed_when: true
+  ansible.builtin.command:
+    chdir: "{{ tunneldigger_client_source_dest }}/client"
+    cmd: cmake .
+
+- name: Build (client)  # noqa: no-handler
+  when: tunneldigger_client_source_checkout.changed
+  register: tunneldigger_client_build
+  community.general.make:
+    chdir: "{{ tunneldigger_client_source_dest }}/client"
+    target: all
+
+- name: Install (client)  # noqa: no-handler
+  when: tunneldigger_client_source_checkout.changed
+  community.general.make:
+    chdir: "{{ tunneldigger_client_source_dest }}/client"
+    target: install
+
+- name: Create systemd service file
+  ansible.builtin.template:
+    src: tunneldigger-client.service.j2
+    dest: "/etc/systemd/system/{{ tunneldigger_client_service_file_base_name | default('tunneldigger-client') }}.service"
+    owner: root
+    group: root
+    mode: "0644"
+  notify:
+    - Reload systemd daemon
+    - Re/start tunneldigger client service
+
+- name: "Create systemd network file for interface {{ tunneldigger_client_ifname | default('tunneldigger-client') }}"
+  ansible.builtin.template:
+    src: tunneldigger-client.network.j2
+    dest: "/etc/systemd/network/60-{{ tunneldigger_client_ifname | default('tunneldigger-client') }}.network"
+    owner: root
+    group: root
+    mode: "0644"
+  notify:
+    - Restart systemd-networkd

@@ -1,0 +1,6 @@
+---
+# handlers file for he_net_tunnel
+- name: Restart systemd-networkd
+  ansible.builtin.systemd:
+    service: systemd-networkd
+    state: restarted

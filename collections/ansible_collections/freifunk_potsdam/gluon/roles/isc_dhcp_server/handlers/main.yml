@@ -1,0 +1,30 @@
+---
+# handlers file for isc_dhcp_server
+
+- name: Systemd daemon reload
+  ansible.builtin.systemd:
+    daemon_reload: true
+
+- name: Reload apparmor
+  ansible.builtin.systemd:
+    name: apparmor.service
+    state: reloaded
+  when: not ansible_check_mode
+
+- name: Restart DHCPv4
+  ansible.builtin.systemd:
+    name: "dhcpd4@br{{ item }}"
+    state: restarted
+  loop: "{{ domains | flatten }}"
+  loop_control:
+    index_var: idx
+  when: dhcpdv4_config.results[idx].changed and not ansible_check_mode
+
+- name: Restart DHCPv6
+  ansible.builtin.systemd:
+    name: "dhcpd6@br{{ item }}"
+    state: restarted
+  loop: "{{ domains | flatten }}"
+  loop_control:
+    index_var: idx
+  when: dhcpv6_config.results[idx].changed and not ansible_check_mode

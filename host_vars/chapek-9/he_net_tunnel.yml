@@ -1,0 +1,12 @@
+---
+he_net_tunnel_netdev_name: he-ipv6
+# use default IPv4 address
+# he_net_tunnel_local: 202.61.249.142
+he_net_tunnel_remote: 216.66.80.30
+
+he_net_tunnel_local_ipv6: 2001:470:1f0a:ba::2/64
+he_net_tunnel_remote_ipv6: 2001:470:1f0a:ba::1
+
+he_net_tunnel_prefixes:
+  - 2001:470:1f0b:b9::/64
+  - 2001:470:7042::/48

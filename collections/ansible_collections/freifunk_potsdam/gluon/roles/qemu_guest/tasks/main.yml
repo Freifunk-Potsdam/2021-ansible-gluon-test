@@ -1,0 +1,13 @@
+---
+- name: Install qemu guest agent
+  ansible.builtin.package:
+    name: "{{ qemu_guest_package }}"
+    state: present
+  notify:
+    - Restart qemu guest agent
+
+- name: Enable qemu guest agent
+  ansible.builtin.service:
+    name: "{{ qemu_guest_service }}"
+    enabled: true
+  when: not ansible_check_mode

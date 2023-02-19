@@ -1,0 +1,17 @@
+# {{ ansible_managed }}
+# DHCPv4 configuration for domain '{{ item }}' ({{ domains[item].name }})
+
+default-lease-time 1800;
+max-lease-time 43200;
+
+authoritative;
+
+subnet {{ domains[item].prefix4 | ansible.utils.ipaddr('network') }} netmask {{ domains[item].prefix4 | ansible.utils.ipaddr('netmask') }} {
+    interface br{{ item }};
+    range {{ domains[item].prefix4 | ansible.utils.ipmath(domains[item].dhcp_v4_offset * gw_number) }} {{ domains[item].prefix4 | ansible.utils.ipmath((domains[item].dhcp_v4_offset * (gw_number + 1) - 1)) }};
+{# set variable for ipv4 address #}
+{% set gw_ipv4_addr = domains[item].prefix4 | ansible.utils.ipaddr('net') | ansible.utils.ipaddr(gw_number) | ansible.utils.ipaddr('address') %}
+
+    option routers {{ gw_ipv4_addr }};
+    option domain-name-servers {{ domains[item].prefix4 | ansible.utils.ipmath(domains[item].ipv4_next_node_offset | default(255)) }};
+}
