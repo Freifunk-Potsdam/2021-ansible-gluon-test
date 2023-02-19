@@ -1,0 +1,14 @@
+---
+# defaults file for he_net_tunnel
+he_net_tunnel_netdev_name: he-ipv6
+he_net_tunnel_netdev_mtu: 1480
+he_net_tunnel_local: "{{ ansible_default_ipv4.address | default(ansible_all_ipv4_addresses[0]) }}"
+he_net_tunnel_remote: ""
+he_net_tunnel_ttl: 255
+
+he_net_tunnel_local_ipv6: ""
+# also known as the IPv6 gateway
+he_net_tunnel_remote_ipv6: ""
+
+# routed prefixes; default a /64, optional a /48
+he_net_tunnel_prefixes: []

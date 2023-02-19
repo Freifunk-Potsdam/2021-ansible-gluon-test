@@ -1,0 +1,16 @@
+# {{ ansible_managed }}
+
+# A virtual network device is only created if the [Match] section
+# matches the current environment, or if the section is empty.
+[Match]
+
+[NetDev]
+Description=HE.net Tunnelbroker sit device
+Name={{ he_net_tunnel_netdev_name | default('he-ipv6') }}
+Kind=sit
+MTUBytes={{ he_net_tunnel_netdev_mtu | default('1480') }}
+
+[Tunnel]
+Local={{ he_net_tunnel_local }}
+Remote={{ he_net_tunnel_remote }}
+TTL={{ he_net_tunnel_ttl | default('255') }}

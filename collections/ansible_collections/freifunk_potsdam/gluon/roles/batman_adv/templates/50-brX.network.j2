@@ -1,0 +1,19 @@
+# {{ ansible_managed }}
+# Bridge domain '{{ item }}' ({{ domains[item].name }})
+
+[Match]
+Name=br{{ item }}
+
+[Network]
+Address={{ domains[item].prefix4 | ansible.utils.ipaddr('net') | ansible.utils.ipaddr(gw_number) }}
+{# NOTE: 4294967296 → 1:0000:0000 → fdc0:ffee:a10::1:0:0/64 #}
+Address={{ domains[item].prefix6 | ansible.utils.ipmath(4294967296 * gw_number) }}/{{ domains[item].prefix6 | ansible.utils.ipaddr('prefix') }}
+{% for extra_prefix6 in domains[item].extra_prefixes6 | default([]) %}
+Address={{ extra_prefix6 | ansible.utils.ipmath(4294967296 * gw_number) }}/{{ extra_prefix6 | ansible.utils.ipaddr('prefix') }}
+{% endfor %}
+
+[RoutingPolicyRule]
+Table=local
+IncomingInterface=br{{ item }}
+Priority={{ domains[item].policy_routing_priority | default( policy_routing_default_uplink_priority | default(10000) + 10 ) }}
+Type=unreachable

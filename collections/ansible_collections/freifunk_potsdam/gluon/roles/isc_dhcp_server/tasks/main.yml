@@ -1,0 +1,135 @@
+---
+# tasks file for isc_dhcp_server
+
+- name: Install ISC DHCP Server
+  ansible.builtin.package:
+    name: isc-dhcp-server
+    state: present
+
+- name: Disable default units
+  when: not ansible_check_mode
+  ansible.builtin.systemd:
+    name: "{{ item }}.service"
+    enabled: false
+    masked: true      # do not allow to start, even manually
+    state: stopped
+  loop:
+    - isc-dhcp-server
+    - isc-dhcp-server6
+
+- name: Create folder for dhcpd4@/dhcpd6@ service override
+  ansible.builtin.file:
+    path: "/etc/systemd/system/{{ item }}.service.d"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  loop:
+    - dhcpd4@
+    - dhcpd6@
+
+- name: Override dhcpd4@/dhcpd6@ service
+  ansible.builtin.copy:
+    src: "{{ item }}.service"
+    dest: "/etc/systemd/system/{{ item }}.service"
+    owner: root
+    group: root
+    mode: "0644"
+  loop:
+    - dhcpd4@
+    - dhcpd6@
+  notify:
+    - Systemd daemon reload
+
+- name: Create configuration directory
+  ansible.builtin.file:
+    dest: "/etc/dhcpd"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Copy local apparmor profile
+  ansible.builtin.copy:
+    src: usr.sbin.dhcpd
+    dest: /etc/apparmor.d/local/usr.sbin.dhcpd
+    owner: root
+    group: root
+    mode: "0644"
+  notify:
+    - Reload apparmor
+
+- name: Create DHCPv4 configuration for every domain
+  register: dhcpdv4_config
+  ansible.builtin.template:
+    src: dhcpd.conf.j2
+    dest: "/etc/dhcpd/dhcpd-br{{ item }}.conf"
+    owner: root
+    group: root
+    mode: "0644"
+  loop: "{{ domains | flatten }}"
+  notify:
+    - Restart DHCPv4
+
+- name: Create DHCPv6 configuration for every domain
+  register: dhcpv6_config
+  ansible.builtin.template:
+    src: dhcpd6.conf.j2
+    dest: "/etc/dhcpd/dhcpd6-br{{ item }}.conf"
+    owner: root
+    group: root
+    mode: "0644"
+  loop: "{{ domains | flatten }}"
+  notify:
+    - Restart DHCPv6
+
+- name: Check if DHCPv4 lease file(s) exists
+  register: dhcpv4_lease_file
+  ansible.builtin.stat:
+    path: "/var/lib/dhcp/dhcpd-br{{ item }}.leases"
+  loop: "{{ domains | flatten }}"
+
+- name: Check if DHCPv6 lease file(s) exists
+  register: dhcpv6_lease_file
+  ansible.builtin.stat:
+    path: "/var/lib/dhcp/dhcpd6-br{{ item }}.leases"
+  loop: "{{ domains | flatten }}"
+
+- name: Create DHCPv4 lease file(s)
+  ansible.builtin.file:
+    path: "/var/lib/dhcp/dhcpd-br{{ item }}.leases"
+    state: touch
+    owner: dhcpd
+    group: dhcpd
+    mode: "0644"
+  loop: "{{ domains | flatten }}"
+  loop_control:
+    index_var: idx
+  when: not dhcpv4_lease_file.results[idx].stat.exists
+
+- name: Create DHCPv6 lease file(s)
+  ansible.builtin.file:
+    path: "/var/lib/dhcp/dhcpd6-br{{ item }}.leases"
+    state: touch
+    owner: dhcpd
+    group: dhcpd
+    mode: "0644"
+  loop: "{{ domains | flatten }}"
+  loop_control:
+    index_var: idx
+  when: not dhcpv6_lease_file.results[idx].stat.exists
+
+- name: Enable DHCPv4 unit(s) on domain interface(s)
+  when: not ansible_check_mode
+  ansible.builtin.systemd:
+    name: "dhcpd4@br{{ item }}"
+    enabled: true
+  loop: "{{ domains | flatten }}"
+
+
+- name: Enable DHCPv6 unit(s) on domain interface(s)
+  when: not ansible_check_mode
+  ansible.builtin.systemd:
+    name: "dhcpd6@br{{ item }}"
+    enabled: true
+  loop: "{{ domains | flatten }}"

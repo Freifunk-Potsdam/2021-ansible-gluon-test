@@ -1,0 +1,44 @@
+---
+# tasks file for bind_server
+
+- name: Install bind
+  ansible.builtin.package:
+    name: bind9
+    state: present
+
+- name: Copy options
+  ansible.builtin.template:
+    src: named.conf.options.j2
+    dest: /etc/bind/named.conf.options
+    owner: root
+    group: bind
+    mode: "0644"
+  notify:
+    - Restart bind
+
+# - name: Check for ffp zone file
+#   register: bind_ffp_zone_file
+#   ansible.builtin.stat:
+#     path: /etc/bind/db.ffp
+
+# - name: Checkzone to gather serial              # noqa: no-changed-when
+#   register: bind_ffp_checkzone
+#   ansible.builtin.command:
+#     cmd: named-checkzone ffp /etc/bind/db.ffp
+#   when: bind_ffp_zone_file.stat.exists
+#   # NOTE: ignore errors or we may not reach the point to rewrite the zone file
+#   ignore_errors: true
+
+# - name: "Set fact: serial"
+#   ansible.builtin.set_fact:
+#     ffp_zone_serial: "{{ bind_ffp_checkzone.stdout_lines[0] | regex_search('serial [0-9]+') | replace('serial ', '') }}"
+#   when: not ansible_check_mode and bind_ffp_zone_file.stat.exists and bind_ffp_checkzone.rc == 0
+
+
+# TODO
+# - check config
+# - check zones
+
+# - name: Fail
+#   ansible.builtin.fail:
+#     msg: Stop

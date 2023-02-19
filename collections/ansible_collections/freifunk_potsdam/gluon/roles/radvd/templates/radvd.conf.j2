@@ -1,0 +1,27 @@
+# {{ ansible_managed }}
+
+{% for domain in domains %}
+interface br{{ domain }} {
+    AdvSendAdvert on;
+    IgnoreIfMissing on;
+    AdvManagedFlag on;
+    AdvOtherConfigFlag on;
+    # https://forum.netgate.com/topic/163940/wireless-clients-lose-ipv6-gateway/24
+    # MaxRtrAdvInterval 200;
+    MaxRtrAdvInterval 1800;
+    AdvLinkMTU 1280;
+{% set prefixes6 = [domains[domain].prefix6] + domains[domain].extra_prefixes6 | default([]) %}
+{% for prefix6 in prefixes6 %}
+    prefix {{ prefix6 }} {
+        AdvOnLink on;
+        AdvAutonomous on;
+        # AdvRouterAddr on;
+    };
+{% endfor %}
+{# NOTE there are only 3 entries allowed!, see https://github.com/radvd-project/radvd/issues/182 #}
+#    RDNSS {{ domains[domain].prefix6 | ansible.utils.ipmath(domains[domain].ipv6_next_node_offset | default(1)) }}{% for prefix6 in prefixes6[:2] %} {{ prefix6 | ansible.utils.ipmath(4294967296 * gw_number) }}{% endfor %} {
+{# NOTE only use next node address or resolution of next node does not work #}
+    RDNSS {{ domains[domain].prefix6 | ansible.utils.ipmath(domains[domain].ipv6_next_node_offset | default(1)) }} {
+    };
+};
+{% endfor %}

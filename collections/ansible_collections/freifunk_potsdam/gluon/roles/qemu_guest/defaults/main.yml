@@ -1,0 +1,5 @@
+---
+# package name to install the qemu guest agent
+qemu_guest_package: qemu-guest-agent
+# name of the qemu guest agent service
+qemu_guest_service: qemu-guest-agent

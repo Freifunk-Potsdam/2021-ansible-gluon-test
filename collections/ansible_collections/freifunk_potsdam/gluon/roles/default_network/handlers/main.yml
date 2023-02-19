@@ -1,0 +1,6 @@
+---
+# handlers file for default_network
+- name: Restart systemd-networkd
+  ansible.builtin.systemd:
+    service: systemd-networkd
+    state: restarted

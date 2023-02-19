@@ -1,0 +1,36 @@
+// {{ ansible_managed }}
+
+options {
+    directory "/var/cache/bind";
+    dnssec-validation auto;
+
+    // use default addresses for queries
+    query-source address {{ ansible_default_ipv4.address }};
+    query-source-v6 address {{ ansible_default_ipv6.address }};
+
+    auth-nxdomain no;
+    // increase query timeout
+    resolver-query-timeout 15000;
+
+    recursion yes;
+    allow-query {
+        fe80::/64;
+        ::1/128;
+{% for domain in domains %}
+{% set prefixes6 = [domains[domain].prefix6] + domains[domain].extra_prefixes6 | default([]) %}
+{% for prefix6 in prefixes6 %}
+        {{ prefix6 }};
+{% endfor %}
+{% endfor %}
+    };
+
+    // listen only on ffp interfaces/addresses
+    listen-on-v6 {
+{% for domain in domains %}
+{% set prefixes6 = [domains[domain].prefix6] + domains[domain].extra_prefixes6 | default([]) %}
+{% for prefix6 in prefixes6 %}
+        {{ prefix6 }};
+{% endfor %}
+{% endfor %}
+    };
+};

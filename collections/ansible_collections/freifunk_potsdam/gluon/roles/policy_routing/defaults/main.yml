@@ -1,0 +1,11 @@
+---
+# NOTE: may use defaults and override in group/host vars
+policy_routing_sysctl_file: /etc/sysctl.d/local-ffp.conf
+# allow IPv4 forwarding
+policy_routing_ipv4_forward: true
+# allow IPv6 forwarding
+policy_routing_ipv6_forward: true
+
+# NOTE: may use defaults ([]) and override in group/host vars
+# table entry for /etc/iproute2/rt_tables
+policy_routing_routing_tables: []

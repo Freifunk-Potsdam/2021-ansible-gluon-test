@@ -1,0 +1,25 @@
+---
+tunneldigger_client_build_packages:
+  - build-essential
+  - cmake
+  - pkg-config
+  - libnl-3-dev
+  - libnl-genl-3-dev
+  - libasyncns-dev
+  - linux-generic
+  - git
+
+# TODO linux-modules-extra-5.15.0-1030-oracle
+
+tunneldigger_client_source_repository: https://github.com/wlanslovenija/tunneldigger.git
+tunneldigger_client_source_version: master
+tunneldigger_client_source_dest: /usr/src/tunneldigger
+
+# create a stable uuid
+tunneldigger_client_uuid: "{{ inventory_hostname | ansible.builtin.to_uuid }}"
+tunneldigger_client_local_tunnel_id: 2
+tunneldigger_client_brokers: []
+# "a" → select broker based on use
+# "g" → select first available broker to connect to (default)
+# "r" → select a random broker
+# tunneldigger_client_broker_selection: ""

@@ -1,0 +1,11 @@
+---
+# tasks file for default_network
+- name: "Systemd-networkd: Create default interface configuration"
+  ansible.builtin.template:
+    src: 10-default.network.j2
+    dest: /etc/systemd/network/10-default.network
+    owner: root
+    group: root
+    mode: "0644"
+  notify:
+    - Restart systemd-networkd

@@ -1,0 +1,12 @@
+# {{ ansible_managed }}
+
+[NetDev]
+Description="BATMAN device for domain '{{ item }}' ({{ domains[item].name }})"
+Name=bat{{ item }}
+Kind=batadv
+
+[BatmanAdvanced]
+GatewayMode=server
+GatewayBandwidthDown={{ domains[item].batman_adv_gw_bandwidth_down | default('100M') }}
+GatewayBandwidthUp={{ domains[item].batman_adv_gw_bandwidth_up | default('100M') }}
+RoutingAlgorithm={{ domains[item].batman_adv_routing_algorithm | default('batman-iv') }}

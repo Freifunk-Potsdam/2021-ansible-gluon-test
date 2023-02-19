@@ -1,0 +1,172 @@
+---
+# tasks file for fastd_server
+
+- name: Install fastd
+  ansible.builtin.package:
+    name: fastd
+    state: present
+
+- name: Create folder for fastd@ service file
+  ansible.builtin.file:
+    path: /etc/systemd/system/fastd@.service.d
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: "Override fastd@ service"
+  register: fastd_systemd_unit_override
+  ansible.builtin.copy:
+    dest: /etc/systemd/system/fastd@.service.d/ansible-managed.conf
+    owner: root
+    group: root
+    mode: "0644"
+    content: |
+      [Service]
+      Restart=on-failure
+      RuntimeDirectory=fastd-%I
+      RuntimeDirectoryMode=0777
+  notify:
+    - Systemd daemon reload
+
+- name: Create fastd key directory/ies for every domain
+  ansible.builtin.file:
+    path: "/etc/fastd/{{ item }}/keys"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  loop: "{{ domains | flatten }}"
+
+- name: Create fastd peers directory/ies for every domain
+  ansible.builtin.file:
+    path: "/etc/fastd/{{ item }}/peers"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  loop: "{{ domains | flatten }}"
+
+- name: Check if secret key exists for every domain
+  register: fastd_secret_key
+  ansible.builtin.stat:
+    path: "/etc/fastd/{{ item }}/keys/secret.key"
+  loop: "{{ domains | flatten }}"
+
+- name: Check if public key exists for every domain
+  register: fastd_public_key
+  ansible.builtin.stat:
+    path: "/etc/fastd/{{ item }}/keys/public.key"
+  loop: "{{ domains | flatten }}"
+
+- name: Write secret key from config
+  register: fastd_secret_key_from_config
+  ansible.builtin.copy:
+    dest: "/etc/fastd/{{ item }}/keys/secret.key"
+    owner: root
+    group: root
+    mode: "0600"
+    content: |
+      secret "{{ domains[item].fastd_secret_key }}";
+  loop: "{{ domains | flatten }}"
+  loop_control:
+    index_var: idx
+  when: (not fastd_secret_key.results[idx].stat.exists
+        or not fastd_public_key.results[idx].stat.exists)
+        and (domains[item].fastd_secret_key is defined
+        and domains[item].fastd_public_key is defined)
+
+- name: Write public key from config
+  register: fastd_public_key_from_config
+  ansible.builtin.copy:
+    dest: "/etc/fastd/{{ item }}/keys/public.key"
+    owner: root
+    group: root
+    mode: "0644"
+    content: |
+      key "{{ domains[item].fastd_public_key }}";
+  loop: "{{ domains | flatten }}"
+  loop_control:
+    index_var: idx
+  when: (not fastd_secret_key.results[idx].stat.exists
+        or not fastd_public_key.results[idx].stat.exists)
+        and (domains[item].fastd_secret_key is defined
+        and domains[item].fastd_public_key is defined)
+
+- name: Generate keys if needed for domain(s)   # noqa: no-changed-when
+  register: fastd_generated_keypair
+  ansible.builtin.command: fastd --generate-key
+  loop: "{{ domains | flatten }}"
+  loop_control:
+    index_var: idx
+  when: (not fastd_secret_key.results[idx].stat.exists
+        or not fastd_public_key.results[idx].stat.exists)
+        and not (fastd_secret_key_from_config.changed
+        or fastd_public_key_from_config.changed)
+
+- name: Write generated secret key              # noqa: no-handler
+  ansible.builtin.copy:
+    dest: "/etc/fastd/{{ item }}/keys/secret.key"
+    owner: root
+    group: root
+    mode: "0600"
+    content: |
+      secret "{{ secret_key }}";
+  loop: "{{ domains | flatten }}"
+  loop_control:
+    index_var: idx
+  vars:
+    secret_key: "{{ fastd_generated_keypair.results[idx].stdout_lines[0] | replace('Secret: ', '') }}"
+  when: fastd_generated_keypair.results[idx].changed
+  notify:
+    - Restart fastd
+
+- name: Write generated public key              # noqa: no-handler
+  ansible.builtin.copy:
+    dest: "/etc/fastd/{{ item }}/keys/public.key"
+    owner: root
+    group: root
+    mode: "0644"
+    content: |
+      key "{{ public_key }}";
+  loop: "{{ domains | flatten }}"
+  loop_control:
+    index_var: idx
+  vars:
+    public_key: "{{ fastd_generated_keypair.results[idx].stdout_lines[1] | replace('Public: ', '') }}"
+  when: fastd_generated_keypair.results[idx].changed
+  notify:
+    - Restart fastd
+
+- name: Create dummy peer (or it won't start)
+  register: fastd_dummy_peer
+  ansible.builtin.copy:
+    dest: "/etc/fastd/{{ item }}/peers/dummy"
+    owner: root
+    group: root
+    mode: "0644"
+    content: |
+      key "THIS-IS-A-DUMMY";
+  loop: "{{ domains | flatten }}"
+  notify:
+    - Restart fastd
+
+- name: Wirte configuration for every domain
+  register: fastd_config
+  ansible.builtin.template:
+    src: fastd.conf.j2
+    dest: "/etc/fastd/{{ item }}/fastd.conf"
+    owner: root
+    group: root
+    mode: "0644"
+  loop: "{{ domains | flatten }}"
+  notify:
+    - Restart fastd
+
+- name: Enable fastd for every domain
+  ansible.builtin.systemd:
+    name: "fastd@{{ item }}"
+    enabled: true
+    masked: false
+  loop: "{{ domains | flatten }}"
+  when: not ansible_check_mode

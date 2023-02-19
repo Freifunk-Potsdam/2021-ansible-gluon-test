@@ -1,0 +1,48 @@
+---
+
+- name: Install batctl and bridge-utils
+  ansible.builtin.package:
+    name:
+      - batctl
+      - bridge-utils
+    state: present
+
+- name: "Systemd-networkd: Create BATMAN netdev(s) for domain(s)"
+  ansible.builtin.template:
+    src: 50-batX-netdev.j2
+    dest: "/etc/systemd/network/50-bat{{ item }}.netdev"
+    owner: root
+    group: root
+    mode: "0644"
+  loop: "{{ domains | flatten }}"
+  notify: Restart systemd-networkd
+
+- name: "Systemd-networkd: Create BATMAN network(s) for domain(s)"
+  ansible.builtin.template:
+    src: 50-batX.network.j2
+    dest: "/etc/systemd/network/50-bat{{ item }}.network"
+    owner: root
+    group: root
+    mode: "0644"
+  loop: "{{ domains | flatten }}"
+  notify: Restart systemd-networkd
+
+- name: "Systemd-networkd: Create bridge netdev(s) for domain(s)"
+  ansible.builtin.template:
+    src: 50-brX.netdev.j2
+    dest: "/etc/systemd/network/50-br{{ item }}.netdev"
+    owner: root
+    group: root
+    mode: "0644"
+  loop: "{{ domains | flatten }}"
+  notify: Restart systemd-networkd
+
+- name: "Systemd-networkd: Create bridge network(s) for domain(s)"
+  ansible.builtin.template:
+    src: 50-brX.network.j2
+    dest: "/etc/systemd/network/50-br{{ item }}.network"
+    owner: root
+    group: root
+    mode: "0644"
+  loop: "{{ domains | flatten }}"
+  notify: Restart systemd-networkd
