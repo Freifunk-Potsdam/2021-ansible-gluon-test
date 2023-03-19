@@ -18,6 +18,9 @@ Address={{ default_network_ipv6_address }}
 {% if default_network_ipv6_gateway is defined and default_network_ipv6_gateway | length %}
 Gateway={{ default_network_ipv6_gateway }}
 {% endif %}
+{% if default_network_ipv4_address is not defined and default_network_ipv6_address is not defined %}
+DHCP=yes
+{% endif %}
 
 {% if default_network_dns_servers is defined %}
 {% for dns_server in default_network_dns_servers %}
