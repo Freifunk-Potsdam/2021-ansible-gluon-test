@@ -20,3 +20,8 @@
     group: root
   notify:
     - Restart systemd-networkd
+
+- name: "Systemd-networkd: Enable systemd-networkd"
+  ansible.builtin.systemd:
+    name: systemd-networkd.service
+    enabled: true
