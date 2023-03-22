@@ -1,0 +1,29 @@
+---
+# tasks file for gw2gw_l2tp
+
+- name: "Systemd-networkd: Create gateway to gateway netdev(s)"
+  ansible.builtin.template:
+    src: 55-l2tp.netdev.j2
+    dest: /etc/systemd/network/55-l2tp-gw{{ gw_number }}to{{ hostvars[item].gw_number }}.netdev
+    owner: root
+    group: root
+    mode: "0644"
+  loop: "{{ groups['ffp_gw'] | flatten }}"
+  when: hostvars[item].inventory_hostname != inventory_hostname
+  notify:
+    - Restart systemd-networkd
+
+# A tricky nested loop
+# We need a netdev for every remote gateway and every domain…
+- name: "Systemd-networkd: Run bla…"
+  ansible.builtin.include_tasks:
+    file: l2tp-network.yml
+  loop: "{{ groups['ffp_gw'] | flatten }}"
+  loop_control:
+    loop_var: host_item
+  when: hostvars[host_item].inventory_hostname != inventory_hostname
+
+- name: "Systemd-networkd: Enable systemd-networkd"
+  ansible.builtin.systemd:
+    name: systemd-networkd.service
+    enabled: true

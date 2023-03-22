@@ -1,0 +1,28 @@
+# {{ ansible_managed }}
+
+[NetDev]
+Description="Gateway to gateway link from gw {{ gw_number }} to gw {{ hostvars[item].gw_number }}"
+Name=l2tpg{{ gw_number }}t{{ hostvars[item].gw_number }}
+Kind=l2tp
+
+[L2TP]
+TunnelId=200{{ gw_number }}{{ hostvars[item].gw_number }}
+PeerTunnelId=200{{ hostvars[item].gw_number }}{{ gw_number }}
+{% if gw2gw_use_ipv4|default(false) or hostvars[item].gw2gw_use_ipv4|default(false) %}
+Remote={{ lookup('community.general.dig', hostvars[item].ansible_host + '/A') }}
+Local={{ ansible_default_ipv4.address|default(ansible_all_ipv4_addresses[0]) }}
+{% else %} 
+Remote={{ lookup('community.general.dig', hostvars[item].ansible_host + '/AAAA') }}
+Local={{ ansible_default_ipv6.address|default(ansible_all_ipv6_addresses[0]) }}
+{% endif %}
+EncapsulationType=udp
+UDPSourcePort=200{{ hostvars[item].gw_number }}{{ gw_number }}
+UDPDestinationPort=200{{ gw_number }}{{ hostvars[item].gw_number }}
+
+{% for domain in domains %}
+[L2TPSession]
+Name=l2tpg{{ gw_number }}t{{ hostvars[item].gw_number }}d{{ domain }}
+SessionId=1{{ domain }}{{ gw_number }}
+PeerSessionId=1{{ domain }}{{ hostvars[item].gw_number }}
+
+{% endfor %}

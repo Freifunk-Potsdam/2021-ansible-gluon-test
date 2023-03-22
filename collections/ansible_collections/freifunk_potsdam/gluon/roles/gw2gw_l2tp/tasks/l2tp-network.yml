@@ -1,0 +1,12 @@
+---
+
+- name: "Create network file"
+  ansible.builtin.template:
+    src: 55-l2tp.network.j2
+    dest: /etc/systemd/network/55-l2tp-g{{ gw_number }}t{{ hostvars[host_item].gw_number }}d{{ domain_item }}.network
+    owner: root
+    group: root
+    mode: "0644"
+  loop: "{{ domains | flatten }}"
+  loop_control:
+    loop_var: domain_item

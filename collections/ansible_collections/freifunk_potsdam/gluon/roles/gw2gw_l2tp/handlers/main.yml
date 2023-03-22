@@ -1,0 +1,6 @@
+---
+# handlers file for gw2gw_l2tp
+- name: Restart systemd-networkd
+  ansible.builtin.systemd:
+    service: systemd-networkd
+    state: restarted
