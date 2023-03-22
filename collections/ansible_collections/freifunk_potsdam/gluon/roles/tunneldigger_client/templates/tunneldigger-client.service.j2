@@ -14,9 +14,9 @@ KillSignal=SIGINT
 # However this is not guaranteed to be the network connection our
 # networks are configured for. So try to restart on failure with a delay
 # of two seconds. Rate limiting kicks in after 12 seconds.
-RestartSec=2s
+RestartSec=10s
 Restart=on-failure
-StartLimitInterval=12s
+StartLimitInterval=5m
 
 [Install]
 WantedBy=multi-user.target
