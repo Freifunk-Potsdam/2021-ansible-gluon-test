@@ -11,6 +11,7 @@ Address={{ domains[item].prefix6 | ansible.utils.ipmath(4294967296 * gw_number) 
 {% for extra_prefix6 in domains[item].extra_prefixes6 | default([]) %}
 Address={{ extra_prefix6 | ansible.utils.ipmath(4294967296 * gw_number) }}/{{ extra_prefix6 | ansible.utils.ipaddr('prefix') }}
 {% endfor %}
+IPv6AcceptRA=false
 
 [RoutingPolicyRule]
 Table=local
