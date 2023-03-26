@@ -16,6 +16,6 @@ subnet6 {{ default_prefix6 }} {
 
     option dhcp6.name-servers
         # only use next node address, or resolution of next node address does not work
-        {{ default_prefix6 | ansible.utils.ipmath(domains[item].ipv6_next_node_offset | default(1)) }};
+        {{ domains[item].prefix6 | ansible.utils.ipmath(domains[item].ipv6_next_node_offset | default(1)) }};
     option dhcp6.domain-search "ffp";
 }
