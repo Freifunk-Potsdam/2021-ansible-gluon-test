@@ -4,17 +4,17 @@
 interface br{{ domain }} {
     AdvSendAdvert on;
     IgnoreIfMissing on;
-    AdvManagedFlag on;
+    AdvManagedFlag off;
     AdvOtherConfigFlag on;
     # https://forum.netgate.com/topic/163940/wireless-clients-lose-ipv6-gateway/24
     # MaxRtrAdvInterval 200;
-    MaxRtrAdvInterval 1800;
-    AdvLinkMTU 1280;
+    # MaxRtrAdvInterval 1800;
+    # AdvLinkMTU 1280;
 {% set prefixes6 = [domains[domain].prefix6] + domains[domain].extra_prefixes6 | default([]) %}
 {% for prefix6 in prefixes6 %}
     prefix {{ prefix6 }} {
-        AdvOnLink on;
-        AdvAutonomous on;
+        # AdvOnLink on;
+        # AdvAutonomous on;
         # AdvRouterAddr on;
     };
 {% endfor %}
