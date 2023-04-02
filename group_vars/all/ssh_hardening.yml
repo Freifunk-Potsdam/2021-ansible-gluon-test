@@ -10,7 +10,7 @@ ssh_listen_to:
 ssh_host_key_files:
   - "/etc/ssh/ssh_host_ed25519_key"
   - "/etc/ssh/ssh_host_rsa_key"
-ssh_allow_users: "hannes seth0r tommy"
+ssh_allow_users: "hannes seth0r tommy carsi"
 ssh_allow_tcp_forwarding: "local"
 ssh_authorized_keys_file: ".ssh/authorized_keys"
 ssh_print_motd: true

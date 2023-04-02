@@ -29,3 +29,12 @@ users:
     authorized_keys_exclusive: true
     authorized_keys:
       - ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEA1P5rR8xX1nNYHREb/upxiR/NPEPXjtniUi0No5WpBr+mYi5hmpPYn9Q6jBwsXIZ7OkwYAIBsnN9z6jg3atq+dIcA1jRB7FYwbtBoTTAa8SUjClncDfbSH0Mrp6R++u4zPSo24OdoaX4dD7m3VPnez8669mfVTL9j7aQOT+Jlwp3tOq0MSYRIyU6843bYF+et4z4seMj+hq9Y0wj5rODMXv6zMwQQGo87CiaoqMs5RBI9gXdRs6/9fDRHsJhQEz6SU/BD/9bkhmg1tjils6C2IpmsiNMY3MNvLYxi3S6L4WUgDGw5Ggk1TcBRyaL+5O2QhPgrLA6TEhbx8UuzhVTNnQ== tommy@tommylap
+  - username: carsi
+    password: "*"
+    update_password: on_create
+    groups:
+      - systemd-journal
+      - sudo
+    authorized_keys_exclusive: true
+    authorized_keys:
+      - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDCX+AwbSfr97XNUwwfqYYO2S4gKZMI8CAB5bzuz/XGHIBd9oJfvwmsDNx5B9Vwo9BKDHIi1HZTOY5uIZDcX+tQhOoO8S9G07i/oETByfPu0OTT0xG/2i+qvDihS/hOyIc8dtzwt+IatrvI0BCEgNskY22bD9hSUNFluLACH1oxDsVg5i/3yVAAxLok+BtPzm5qWV+VfmcKUrf7lo5U9EkYPkTeRGQPKUQ9Xr7g3fghuQd9rg+9ejbtVkSXR6bLbPsjcC3F1SJUZghve3w6Ftd4LsjJEw9wQh9NDKKmnnCvDpIZSgAr8LtLidNSz4jseJ1cqAiuPxbG6GJZxqxT4r0VWnAc+PRlsi7E+NvUTPXQrYExhJ1OQSunmFAg5XD4cEE36CsU3J4cI+ghrehvUyJVn45e8WQkjiyTJtRyLa5VX50ie2xBPZecz9TuQevnEzojIjoDPyarDo62VKFZai76UldddHR+2I/8IcSrqWG1lRn2PITy0jsU/qd+kRDVDNzR1zQCEg/D4tA7cvtqA8Bu+y68PZAIZGZ4maTjewi//TRrtgGjdsPoGPqkLU/TZl7DtHBoh1TJ5jZcncbuyRLl/WSma+0Pot/Yg/SuRNPyjAhd0TSJO1W76j5yJb2n5Lt+8VwdPhyyU3r/SdaTnv3KcHnU5SnM4snp1k+slmic9w== carsi@t420
