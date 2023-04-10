@@ -11,6 +11,7 @@ users:
       - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICZ14THlloupTncq14J51dVY25CvoJsLtxtNBrK1QIgp hannes@X570-A-JC17049246
       - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIK/o0ynbYtLCSI0T1LpLOq7ar4atOwmhwH/SQEY0RvKX hannes@Swift1-SF114-32
       - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOwVnxyv4u1zi7foL8xvBqHK8shMqAdOr91ukt8q+TNv hfuchs@ThinkPad-T470p-PF0V4J38
+      - ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMIsZj2dEbDzbIKnv2okw/oSb7UwByo08UsUCNg31Tpu hannes@openpgp:0x6D752620
   - username: seth0r
     password: "*"
     update_password: on_create
