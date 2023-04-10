@@ -1,6 +1,6 @@
 ---
 - hosts:
-    - ffp-gw-he-net
+    - ffp_gw_he_net
 
   collections:
     - devsec.hardening
