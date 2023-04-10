@@ -15,3 +15,5 @@ default_network_dns_servers:
 
 default_network_network_section_extra_options:
   - Tunnel: "{{ he_net_tunnel_netdev_name }}"
+  - L2TP: l2tpg1t2
+  - L2TP: l2tpg1t3

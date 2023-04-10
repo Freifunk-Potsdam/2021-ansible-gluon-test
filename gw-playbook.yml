@@ -14,16 +14,14 @@
     - ssh_hardening
     # collection: freifunk_potsdam.gluon
     - system_packages
-    # - qemu_guest
-    # - default_network
+    - default_network
     - policy_routing
     - tunneldigger_client
-    # - he_net_tunnel
     - batman_adv
+    - gw2gw_l2tp
     - fastd_server
     - isc_dhcp_server
     - bind_server
-    - radvd
 
   pre_tasks: []
 
