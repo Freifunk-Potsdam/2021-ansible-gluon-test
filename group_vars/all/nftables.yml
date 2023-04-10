@@ -77,13 +77,6 @@ nftables_tables:
           hook: "forward"
           priority: "filter"
           policy: "accept"
-        rules:
-          - position: 10
-            statement: "oifname \"ffup\" tcp flags syn tcp option maxseg size set 1324 counter"
-            comment: "MSS Clamping for outgoing IPv4 traffic (ffup is only IPv4)"
-          - position: 11
-            statement: "iifname \"ffup\" tcp flags syn tcp option maxseg size set 1324 counter"
-            comment: "MSS Clamping for incoming IPv4 traffic (ffup is only IPv4)"
       - name: "output"
         base:
           type: "filter"
