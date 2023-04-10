@@ -25,7 +25,15 @@
     - bind_server
     - radvd
 
-  pre_tasks: []
+  pre_tasks:
+
+    - name: Allow users in group sudo to switch without password
+      ansible.builtin.lineinfile:
+        path: /etc/sudoers
+        state: present
+        regexp: '^%sudo\sALL='
+        line: '%sudo ALL=(ALL) NOPASSWD: ALL'
+        validate: /usr/sbin/visudo -cf %s
 
   tasks: []
 
