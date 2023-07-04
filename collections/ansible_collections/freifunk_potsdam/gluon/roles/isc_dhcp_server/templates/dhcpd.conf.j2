@@ -14,4 +14,6 @@ subnet {{ domains[item].prefix4 | ansible.utils.ipaddr('network') }} netmask {{ 
 
     option routers {{ gw_ipv4_addr }};
     option domain-name-servers {{ domains[item].prefix4 | ansible.utils.ipmath(domains[item].ipv4_next_node_offset | default(255)) }};
+    # fastd mtu - batman overhead
+    option interface-mtu {{ domains[item].fastd_mtu - 32 }};
 }
