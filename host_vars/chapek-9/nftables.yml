@@ -79,9 +79,15 @@ nftables_tables:
           policy: "accept"
         rules:
           - position: 10
+            statement: "oifname \"he-ipv6\" tcp flags syn tcp option maxseg size set 1304 counter"
+            comment: "MSS Clamping for outgoing IPv4 traffic (he-ipv6 is only IPv6)"
+          - position: 11
+            statement: "iifname \"he-ipv6\" tcp flags syn tcp option maxseg size set 1304 counter"
+            comment: "MSS Clamping for incoming IPv4 traffic (he-ipv6 is only IPv6)"
+          - position: 20
             statement: "oifname \"ffup\" tcp flags syn tcp option maxseg size set 1324 counter"
             comment: "MSS Clamping for outgoing IPv4 traffic (ffup is only IPv4)"
-          - position: 11
+          - position: 21
             statement: "iifname \"ffup\" tcp flags syn tcp option maxseg size set 1324 counter"
             comment: "MSS Clamping for incoming IPv4 traffic (ffup is only IPv4)"
       - name: "output"
