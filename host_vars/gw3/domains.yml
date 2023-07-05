@@ -2,8 +2,8 @@
 domains:
   "0":
     name: "Potsdam-Stadt"
-    batman_adv_gw_bandwidth_down: 800M
-    batman_adv_gw_bandwidth_up: 800M
+    batman_adv_gw_bandwidth_down: 200M
+    batman_adv_gw_bandwidth_up: 200M
     batman_adv_routing_algorithm: batman-iv
     prefix4: 10.22.0.0/20
     prefix6: fdc0:ffee:0a10::/64
@@ -29,8 +29,8 @@ domains:
     ipv6_next_node_offset: 65535  # ffff, default 1# old 10090 port
   "16":
     name: "Potsdam-Umland"
-    batman_adv_gw_bandwidth_down: 800M
-    batman_adv_gw_bandwidth_up: 800M
+    batman_adv_gw_bandwidth_down: 200M
+    batman_adv_gw_bandwidth_up: 200M
     batman_adv_routing_algorithm: batman-iv
     prefix4: 10.22.16.0/22
     prefix6: fdc0:ffee:0a10:10::/64
