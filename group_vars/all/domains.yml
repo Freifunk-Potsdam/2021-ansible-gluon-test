@@ -5,6 +5,7 @@ domains:
     batman_adv_gw_bandwidth_down: 800M
     batman_adv_gw_bandwidth_up: 800M
     batman_adv_routing_algorithm: batman-iv
+    batman_adv_originator_interval: 5s
     prefix4: 10.22.0.0/20
     prefix6: fdc0:ffee:0a10::/64
     extra_prefixes6:
@@ -32,6 +33,7 @@ domains:
     batman_adv_gw_bandwidth_down: 800M
     batman_adv_gw_bandwidth_up: 800M
     batman_adv_routing_algorithm: batman-iv
+    batman_adv_originator_interval: 5s
     prefix4: 10.22.16.0/22
     prefix6: fdc0:ffee:0a10:10::/64
     extra_prefixes6:
