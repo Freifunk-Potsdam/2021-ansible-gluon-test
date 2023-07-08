@@ -10,3 +10,4 @@ GatewayMode=server
 GatewayBandwidthDown={{ domains[item].batman_adv_gw_bandwidth_down | default('100M') }}
 GatewayBandwidthUp={{ domains[item].batman_adv_gw_bandwidth_up | default('100M') }}
 RoutingAlgorithm={{ domains[item].batman_adv_routing_algorithm | default('batman-iv') }}
+OriginatorIntervalSec={{ domains[item].batman_adv_originator_interval | default('1s') }}
