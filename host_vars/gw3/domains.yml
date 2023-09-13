@@ -8,9 +8,7 @@ domains:
     batman_adv_originator_interval: 5s
     prefix4: 10.22.0.0/20
     prefix6: fdc0:ffee:0a10::/64
-    extra_prefixes6:
-      - 2001:470:7042::/64
-    prefix6_dhcp: 2001:470:7042::/64
+    prefix6_dhcp: fdc0:ffee:0a10::/64
     # default: policy_routing_default_uplink_priority (1000) + 10
     #policy_routing_priority: 10010
     # NOTE: 2024, 2^10: 10.22.0.0/20 → 10.22.4.0
@@ -36,9 +34,7 @@ domains:
     batman_adv_originator_interval: 5s
     prefix4: 10.22.16.0/22
     prefix6: fdc0:ffee:0a10:10::/64
-    extra_prefixes6:
-      - 2001:470:7042:10::/64
-    prefix6_dhcp: 2001:470:7042:10::/64
+    prefix6_dhcp: fdc0:ffee:0a10:10::/64
     fastd_mtu: 1396
     dhcp_v4_offset: 256
     #ipv4_next_node_offset: 255
