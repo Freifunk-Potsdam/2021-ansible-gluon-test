@@ -23,6 +23,7 @@
     - fastd_server
     - isc_dhcp_server
     - bind_server
+    - radvd
 
   pre_tasks:
 
