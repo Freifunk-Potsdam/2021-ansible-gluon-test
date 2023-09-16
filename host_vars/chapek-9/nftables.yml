@@ -78,6 +78,10 @@ nftables_tables:
           priority: "filter"
           policy: "accept"
         rules:
+          # NOTE: Our Link MTU is 1364: -40 for IPv4 -60 for IPv6 for MSS Clamping
+          # See:
+          #   - https://gluon.readthedocs.io/en/latest/user/mtu.html#suggested-mss-values
+          #   - https://forum.openwrt.org/t/firewall4-etc-firewall-user/121548/3
           - position: 10
             statement: "oifname \"he-ipv6\" tcp flags syn tcp option maxseg size set 1304 counter"
             comment: "MSS Clamping for outgoing IPv4 traffic (he-ipv6 is only IPv6)"
@@ -90,6 +94,12 @@ nftables_tables:
           - position: 21
             statement: "iifname \"ffup\" tcp flags syn tcp option maxseg size set 1324 counter"
             comment: "MSS Clamping for incoming IPv4 traffic (ffup is only IPv4)"
+          - position: 30
+            statement: "oifname \"ffupwg\" tcp flags syn tcp option maxseg size set meta nfproto map { ipv4 : 1324, ipv6 : 1304 } counter"
+            comment: "MSS Clamping for outgoing traffic via wireguard tunnel"
+          - position: 31
+            statement: "iifname \"ffupwg\" tcp flags syn tcp option maxseg size set meta nfproto map { ipv4 : 1324, ipv6 : 1304 } counter"
+            comment: "MSS Clamping for incoming traffic via wireguard tunnel"
       - name: "output"
         base:
           type: "filter"
@@ -107,14 +117,14 @@ nftables_tables:
         rules:
             # use oifname since the interface may not be up / present when the rules are applied
           - position: 1
-            statement: "ip saddr 10.22.0.0/20 oifname \"ffup\" counter masquerade"
+            statement: "ip saddr 10.22.0.0/20 oifname \"ffupwg\" counter masquerade"
             comment: "masquerade ipv4 ffp client traffic (domain 0)"
           - position: 2
-            statement: "ip saddr 10.22.16.0/22 oifname \"ffup\" counter masquerade"
+            statement: "ip saddr 10.22.16.0/22 oifname \"ffupwg\" counter masquerade"
             comment: "masquerade ipv4 ffp client traffic (domain 16)"
           - position: 20
-            statement: "ip6 saddr fdc0:ffee:0a10::/64 oif \"{{ nftables_primary_interface }}\" counter masquerade"
+            statement: "ip6 saddr fdc0:ffee:0a10::/64 oifname \"ffupwg\" counter masquerade"
             comment: "masquerade ipv6 ffp client traffic via link local (domain 0)"
           - position: 21
-            statement: "ip6 saddr fdc0:ffee:0a10:10::/64 oif \"{{ nftables_primary_interface }}\" counter masquerade"
+            statement: "ip6 saddr fdc0:ffee:0a10:10::/64 oifname \"ffupwg\" counter masquerade"
             comment: "masquerade ipv6 ffp client traffic via link local (domain 16)"

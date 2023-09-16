@@ -1,0 +1,4 @@
+host_vars/gw1/wireguard_client.yml	yaml[comments]
+host_vars/gw2/wireguard_client.yml	yaml[comments]
+host_vars/gw3/wireguard_client.yml	yaml[comments]
+

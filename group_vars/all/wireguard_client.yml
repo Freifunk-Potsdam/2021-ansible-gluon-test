@@ -1,0 +1,9 @@
+---
+wireguard_client_ifname: ffupwg
+wireguard_client_routes:
+  - table: 200
+    gateway: "0.0.0.0"
+    metric: 512
+  - table: 200
+    gateway: "::"
+    metric: 512
