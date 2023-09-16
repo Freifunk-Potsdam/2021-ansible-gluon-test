@@ -1,0 +1,15 @@
+# {{ ansible_managed }}
+
+[NetDev]
+Name={{ wireguard_client_ifname | default('wg0') }}
+Kind=wireguard
+
+[WireGuard]
+PrivateKey={{ wireguard_client_private_key }}
+
+[WireGuardPeer]
+PublicKey={{ wireguard_client_public_key }}
+{% for allowed_ips in wireguard_client_allowed_ips %}
+AllowedIPs={{ allowed_ips }}
+{% endfor %}
+Endpoint={{ wireguard_client_endpoint }}

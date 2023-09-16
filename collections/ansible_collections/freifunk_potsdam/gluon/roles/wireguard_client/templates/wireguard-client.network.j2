@@ -1,0 +1,28 @@
+# {{ ansible_managed }}
+
+[Match]
+Name={{ wireguard_client_ifname | default('wg0') }}
+
+[Network]
+{% for wireguard_client_address in wireguard_client_addresses %}
+Address={{ wireguard_client_address }}
+{% endfor %}
+#DNS=10.64.0.1
+#DNSDefaultRoute=yes
+#Domains=~.
+
+{% for domain in domains %}
+[RoutingPolicyRule]
+Family=both
+Table={{ policy_routing_default_uplink_table_value }}
+IncomingInterface=br{{ domain }}
+Priority={{ policy_routing_default_uplink_priority }}
+
+{% endfor %}
+{% for wireguard_client_route in wireguard_client_routes %}
+[Route]
+{% for key, value in wireguard_client_route.items() %}
+{{ key | capitalize() }}={{ value }}
+{% endfor %}
+
+{% endfor %}
