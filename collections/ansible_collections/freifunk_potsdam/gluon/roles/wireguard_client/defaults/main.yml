@@ -1,0 +1,12 @@
+---
+# default allowed IPs
+wireguard_client_allowed_ips:
+  - 0.0.0.0/0
+  - ::0/0
+
+wireguard_client_routes: []
+
+# wireguard_client_routes:
+#   - table: 123
+#     gateway: 0.0.0.0
+#     metric: 128

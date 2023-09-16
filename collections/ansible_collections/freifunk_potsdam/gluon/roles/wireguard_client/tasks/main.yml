@@ -1,0 +1,35 @@
+---
+- name: Check fif all required variables are set
+  when: not wireguard_client_private_key or
+        not wireguard_client_public_key or
+        not wireguard_client_endpoint or
+        wireguard_client_addresses | length() == 0
+  ansible.builtin.fail:
+    msg: "Check that all required variables are set!"
+
+- name: Create systemd netdev file for interface {{ wireguard_client_ifname | default('wg0') }}
+  ansible.builtin.template:
+    src: wireguard-client.netdev.j2
+    dest: "/etc/systemd/network/60-{{ wireguard_client_ifname | default('wg0') }}.netdev"
+    owner: root
+    group: root
+    mode: "0644"
+  notify:
+    - Reload systemd daemon
+    - Restart systemd-networkd
+
+- name: Create systemd network file for interface {{ wireguard_client_ifname | default('wg0') }}
+  ansible.builtin.template:
+    src: wireguard-client.network.j2
+    dest: "/etc/systemd/network/60-{{ wireguard_client_ifname | default('wg0') }}.network"
+    owner: root
+    group: root
+    mode: "0644"
+  notify:
+    - Reload systemd daemon
+    - Restart systemd-networkd
+
+- name: "Systemd-networkd: Enable systemd-networkd"
+  ansible.builtin.systemd:
+    name: systemd-networkd.service
+    enabled: true
