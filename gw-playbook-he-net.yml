@@ -17,6 +17,7 @@
     - default_network
     - policy_routing
     - tunneldigger_client
+    - wireguard_client
     - he_net_tunnel
     - batman_adv
     - gw2gw_l2tp
