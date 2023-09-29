@@ -35,6 +35,25 @@
         line: '%sudo ALL=(ALL) NOPASSWD: ALL'
         validate: /usr/sbin/visudo -cf %s
 
+    - name: Remove WireGuard network configuration
+      ansible.builtin.file:
+        path: "/etc/systemd/network/60-ffupwg.{{ item }}"
+        state: absent
+      loop:
+        - "netdev"
+        - "network"
+      notify:
+        - "Reload systemd daemon"
+        - "Restart systemd-networkd"
+
   tasks: []
 
-  handlers: []
+  handlers:
+    - name: "Reload systemd daemon"
+      ansible.builtin.systemd:
+        daemon_reload: true
+
+    - name: "Restart systemd-networkd"
+      ansible.builtin.systemd:
+        service: systemd-networkd
+        state: restarted
