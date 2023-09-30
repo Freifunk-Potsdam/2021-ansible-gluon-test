@@ -16,7 +16,6 @@
     - system_packages
     - default_network
     - policy_routing
-    - tunneldigger_client
     - wireguard_client
     - batman_adv
     - gw2gw_l2tp
@@ -35,6 +34,37 @@
         line: '%sudo ALL=(ALL) NOPASSWD: ALL'
         validate: /usr/sbin/visudo -cf %s
 
+    - name: Remove tunneldigger client configuration
+      block:
+        - name: Check for tunneldigger service file
+          register: tunneldigger_service_file_stat
+          ansible.builtin.stat:
+            path: "/etc/systemd/system/{{ tunneldigger_client_service_file_base_name | default('tunneldigger-client') }}.service"
+
+        - name: Stop and disable tunneldigger service
+          ansible.builtin.systemd:
+            service: "{{ tunneldigger_client_service_file_base_name | default('tunneldigger-client') }}.service"
+            state: stopped
+            enabled: false
+          when: tunneldigger_service_file_stat.stat.exists
+          notify:
+            - Restart systemd-networkd
+
+        - name: Remeove service and network file
+          ansible.builtin.file:
+            path: "{{ item }}"
+            state: absent
+          loop:
+            - "/etc/systemd/system/{{ tunneldigger_client_service_file_base_name | default('tunneldigger-client') }}.service"
+            - "/etc/systemd/network/60-{{ tunneldigger_client_ifname | default('tunneldigger-client') }}.network"
+          notify:
+            - Restart systemd-networkd
+
   tasks: []
 
-  handlers: []
+  handlers:
+    - name: "Restart systemd-networkd"
+      ansible.builtin.systemd:
+        service: systemd-networkd
+        state: restarted
+
