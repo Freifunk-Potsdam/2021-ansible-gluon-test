@@ -17,7 +17,6 @@
     - default_network
     - policy_routing
     - wireguard_client
-    - he_net_tunnel
     - batman_adv
     - gw2gw_l2tp
     - fastd_server
@@ -58,6 +57,18 @@
           loop:
             - "/etc/systemd/system/{{ tunneldigger_client_service_file_base_name | default('tunneldigger-client') }}.service"
             - "/etc/systemd/network/60-{{ tunneldigger_client_ifname | default('tunneldigger-client') }}.network"
+          notify:
+            - Restart systemd-networkd
+
+    - name: Remove he.net tunnel network configuration
+      block:
+        - name: Remove systemd-network configuration files
+          ansible.builtin.file:
+            path: "/etc/systemd/network/40-he-ipv6.{{ item }}"
+            state: absent
+          loop:
+            - netdev
+            - network
           notify:
             - Restart systemd-networkd
 
