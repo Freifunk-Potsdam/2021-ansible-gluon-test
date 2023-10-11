@@ -25,10 +25,6 @@ interface br{{ domain }} {
 {% endfor %}
     route ::/0 {
     };
-{% for prefix6 in prefixes6 %}
-    route {{ prefix6 }} {
-    };
-{% endfor %}
 {# NOTE there are only 3 entries allowed!, see https://github.com/radvd-project/radvd/issues/182 #}
 #    RDNSS {{ domains[domain].prefix6 | ansible.utils.ipmath(domains[domain].ipv6_next_node_offset | default(1)) }}{% for prefix6 in prefixes6[:2] %} {{ prefix6 | ansible.utils.ipmath(4294967296 * gw_number) }}{% endfor %} {
 {# NOTE only use next node address or resolution of next node does not work #}
