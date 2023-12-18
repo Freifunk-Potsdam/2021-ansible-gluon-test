@@ -13,6 +13,11 @@ Address={{ extra_prefix6 | ansible.utils.ipmath(4294967296 * gw_number) }}/{{ ex
 {% endfor %}
 IPv6AcceptRA=false
 
+[Route]
+Destination={{ domains[item].prefix6 }}
+Metric=1024
+Table={{ policy_routing_default_uplink_table_value }}
+
 [RoutingPolicyRule]
 Table=local
 IncomingInterface=br{{ item }}
