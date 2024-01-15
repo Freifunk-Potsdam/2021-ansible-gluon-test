@@ -1,0 +1,25 @@
+// {{ ansible_managed }}
+{% for zone in bind_server_zones %}
+zone "{{ zone }}" {
+  type {{ bind_server_zones[zone].type | default('primary') }};
+  file "/etc/bind/db.{{ zone }}";
+{% if bind_server_zones[zone].notify | default(false) %}
+  notify yes;
+{% endif %}
+{% if bind_server_zones[zone].allow_transfer_to | default([]) | length > 0 %}
+  allow-transfer {
+{% for host in bind_server_zones[zone].allow_transfer_to %}
+    {{ host }};
+{% endfor %}
+  };
+{% endif %}
+{% if bind_server_zones[zone].primaries | default([]) | length > 0 %}
+  primaries {
+{% for host in bind_server_zones[zone].primaries %}
+    {{ host }};
+{% endfor %}
+  };
+{% endif %}
+};
+
+{% endfor %}
