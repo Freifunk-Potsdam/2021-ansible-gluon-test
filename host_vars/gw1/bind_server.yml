@@ -1,0 +1,36 @@
+---
+bind_server_zones:
+  ffp:
+    serial: 2024011502
+    notify: "yes"
+    allow_transfer_to:
+      - "fdc0:ffee:a10::2:0:0"
+      - "fdc0:ffee:a10::3:0:0"
+    records:
+      - name: "@"
+        type: NS
+        value: ns1.ffp.
+      - name: "@"
+        type: NS
+        value: ns2.ffp.
+      - name: "@"
+        type: NS
+        value: ns3.ffp.
+      - name: ns1
+        type: AAAA
+        value: "fdc0:ffee:a10::1:0:0"
+      - name: ns1
+        type: AAAA
+        value: "fdc0:ffee:a10:10:0:1::"
+      - name: ns2
+        type: AAAA
+        value: "fdc0:ffee:a10::2:0:0"
+      - name: ns2
+        type: AAAA
+        value: "fdc0:ffee:a10:10:0:2::"
+      - name: ns3
+        type: AAAA
+        value: "fdc0:ffee:a10::3:0:0"
+      - name: ns3
+        type: AAAA
+        value: "fdc0:ffee:a10:10:0:3::"

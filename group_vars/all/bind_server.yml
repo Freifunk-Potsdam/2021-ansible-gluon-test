@@ -1,0 +1,8 @@
+---
+bind_server_zones:
+  ffp:
+    type: secondary
+    # it's the same server on different interfaces
+    primaries:
+      - "fdc0:ffee:a10::1:0:0"
+     # - "fdc0:ffee:a10:10:0:1::"
