@@ -60,7 +60,256 @@
           notify:
             - Restart systemd-networkd
 
-  tasks: []
+  tasks:
+
+    # caddy
+    - name: Install caddy dependencies
+      ansible.builtin.package:
+        name:
+          - debian-keyring
+          - debian-archive-keyring
+          - apt-transport-https
+          - curl
+        state: present
+
+    - name: Get caddy gpg key
+      ansible.builtin.get_url:
+        url: https://dl.cloudsmith.io/public/caddy/stable/gpg.key
+        dest: /usr/share/keyrings/caddy-stable-archive-keyring.gpg.download
+        mode: "0644"
+
+    - name: Convert gpg key
+      ansible.builtin.shell:  # noqa: no-changed-when
+        cmd: "set -o pipefail && cat /usr/share/keyrings/caddy-stable-archive-keyring.gpg.download \
+              | gpg --dearmor -o - > /usr/share/keyrings/caddy-stable-archive-keyring.gpg"
+        executable: /bin/bash
+
+    - name: Add caddy apt repository
+      ansible.builtin.apt_repository:
+        filename: caddy-stable.list
+        repo: "deb [signed-by=/usr/share/keyrings/caddy-stable-archive-keyring.gpg] https://dl.cloudsmith.io/public/caddy/stable/deb/debian any-version main"
+        state: present
+
+    - name: Install caddy
+      ansible.builtin.package:
+        name:
+          - caddy
+        state: present
+      when: not ansible_check_mode
+      notify:
+        - Enable caddy
+
+    - name: Generate Caddyfile
+      ansible.builtin.copy:
+        dest: /etc/caddy/Caddyfile
+        content: |
+          {
+              auto_https off
+          }
+          http://speed.ffp {
+              bind [fdc0:ffee:a10::{{ gw_number }}:0:0] [fdc0:ffee:a10:10:0:{{ gw_number }}::]
+              redir http://speedtest.ffp
+          }
+          http://speedtest.ffp {
+              bind [fdc0:ffee:a10::{{ gw_number }}:0:0] [fdc0:ffee:a10:10:0:{{ gw_number }}::]
+              reverse_proxy [::1]:8880 127.0.0.1:8880
+          }
+          http://ipv4.speedtest.ffp {
+              bind 10.22.0.{{ gw_number }} 10.22.16.{{ gw_number }}
+              reverse_proxy 127.0.0.1:8880
+          }
+          http://ipv6.speedtest.ffp {
+              bind [fdc0:ffee:a10::{{ gw_number }}:0:0] [fdc0:ffee:a10:10:0:{{ gw_number }}::]
+              reverse_proxy [::1]:8880
+          }
+          http://gw{{ gw_number }}-ipv4-backend.speedtest.ffp {
+              bind 10.22.0.{{ gw_number }} 10.22.16.{{ gw_number }}
+              reverse_proxy 127.0.0.1:8881
+          }
+          http://gw{{ gw_number }}-ipv6-backend.speedtest.ffp {
+              bind [fdc0:ffee:a10::{{ gw_number }}:0:0] [fdc0:ffee:a10:10:0:{{ gw_number }}::]
+              reverse_proxy [::1]:8881
+          }
+        owner: root
+        group: root
+        mode: "0644"
+      notify:
+        - Reload caddy
+    # END: caddy
+
+    # librespeed
+    - name: Install podman
+      ansible.builtin.package:
+        name:
+          - podman
+          - acl     # beckome_user
+        state: present
+
+    - name: Create containers user
+      register: containers_user
+      ansible.builtin.user:
+        name: containers
+        shell: /bin/bash
+        home: /srv/containers/home
+
+    - name: Run podman migrate
+      ansible.builtin.command:  # noqa: no-changed-when no-handler
+        cmd: "podman system migrate"
+      when: containers_user.changed
+
+    - name: Run podman migrate as containers user
+      become: true
+      become_user: containers
+      ansible.builtin.command:  # noqa: no-changed-when
+        cmd: "podman system migrate"
+      when: not ansible_check_mode and containers_user.changed
+
+    - name: Check if containers user lingers
+      register: linger_containers
+      ansible.builtin.stat:
+        path: /var/lib/systemd/linger/containers
+
+    - name: Enable linger for user containers
+      ansible.builtin.command: loginctl enable-linger containers  # noqa: no-changed-when
+      when: not linger_containers.stat.exists
+
+    - name: Check if podman socket exists
+      register: containers_podman_socket_stat
+      ansible.builtin.stat:
+        path: /srv/containers/home/.config/systemd/user/sockets.target.wants/podman.socket
+
+    - name: Enable podman socket for user containers
+      become: true
+      become_user: containers
+      # ansible.builtin.command: systemctl --user enable --now podman.socket
+      ansible.builtin.systemd_service:
+        name: podman.socket
+        enabled: true
+        scope: user
+        state: started
+      environment:
+        XDG_RUNTIME_DIR: "/run/user/{{ containers_user.uid }}"
+      when: not ansible_check_mode and not containers_podman_socket_stat.stat.exists
+
+    - name: Enable podman service
+      become: true
+      become_user: containers
+      ansible.builtin.systemd_service:
+        name: podman.service
+        scope: user
+        enabled: true
+        state: started
+      environment:
+        XDG_RUNTIME_DIR: "/run/user/{{ containers_user.uid }}"
+
+    - name: Create directory for librespeed frontend configuration
+      ansible.builtin.file:
+        path: /srv/containers/home/containers/librespeed-frontend
+        state: directory
+        owner: containers
+        group: containers
+        mode: "0755"
+
+    - name: Create librespeed frontend configuration
+      register: librespeed_frontend_config
+      ansible.builtin.copy:
+        dest: /srv/containers/home/containers/librespeed-frontend/servers.json
+        content: "{{ librespeed_frontend_config | to_json }}"
+        owner: containers
+        group: containers
+        mode: "0644"
+
+    - name: Create librespeed frontend container
+      become: true
+      become_user: containers
+      containers.podman.podman_container:
+        force_restart: "{{ librespeed_frontend_config.changed }}"
+        name: librespeed-frontend
+        image: ghcr.io/librespeed/speedtest:latest
+        hostname: librespeed-frontend{{ gw_number }}
+        memory: 64mb
+        memory_swap: 64mb
+        label:
+          io.containers.autoupdate: registry
+        env:
+          MODE: frontend
+          TITLE: "LibreSpeed"
+          DISABLE_IPINFO: true
+        volume:
+          - "/srv/containers/home/containers/librespeed-frontend/servers.json:/servers.json:ro"
+        ports:
+          - "127.0.0.1:8880:80"
+          - "[::1]:8880:80"
+        restart_policy: always
+
+    - name: Create systemd unit for librespeed-frontend container
+      become: true
+      become_user: containers
+      environment:
+        XDG_RUNTIME_DIR: "/run/user/{{ containers_user.uid }}"
+      containers.podman.podman_generate_systemd:
+        name: librespeed-frontend
+        new: true
+        dest: /srv/containers/home/.config/systemd/user
+        restart_policy: always
+      when: not ansible_check_mode
+
+    - name: Ensure librespeed-frontend container is started and enabled
+      become: true
+      become_user: containers
+      environment:
+        XDG_RUNTIME_DIR: "/run/user/{{ containers_user.uid }}"
+      ansible.builtin.systemd_service:
+        name: container-librespeed-frontend
+        daemon_reload: true
+        state: started
+        enabled: true
+        scope: user
+      when: not ansible_check_mode
+
+    - name: Create librespeed backend container
+      become: true
+      become_user: containers
+      containers.podman.podman_container:
+        name: librespeed-backend
+        image: ghcr.io/librespeed/speedtest:latest
+        hostname: librespeed-backend{{ gw_number }}
+        memory: 128mb
+        memory_swap: 128mb
+        label:
+          io.containers.autoupdate: registry
+        env:
+          MODE: backend
+        ports:
+          - "127.0.0.1:8881:80"
+          - "[::1]:8881:80"
+        restart_policy: always
+
+    - name: Create systemd unit for librespeed-backend container
+      become: true
+      become_user: containers
+      environment:
+        XDG_RUNTIME_DIR: "/run/user/{{ containers_user.uid }}"
+      containers.podman.podman_generate_systemd:
+        name: librespeed-backend
+        new: true
+        dest: /srv/containers/home/.config/systemd/user
+        restart_policy: always
+      when: not ansible_check_mode
+
+    - name: Ensure librespeed-frontend container is started and enabled
+      become: true
+      become_user: containers
+      environment:
+        XDG_RUNTIME_DIR: "/run/user/{{ containers_user.uid }}"
+      ansible.builtin.systemd_service:
+        name: container-librespeed-backend
+        daemon_reload: true
+        state: started
+        enabled: true
+        scope: user
+      when: not ansible_check_mode
+    # END librespeed
 
   handlers:
     - name: "Restart systemd-networkd"
@@ -68,3 +317,15 @@
         service: systemd-networkd
         state: restarted
 
+    - name: "Enable caddy"
+      ansible.builtin.systemd_service:
+        name: caddy
+        enabled: true
+        state: started
+      when: not ansible_check_mode
+
+    - name: "Reload caddy"
+      ansible.builtin.systemd_service:
+        name: caddy
+        state: reloaded
+      when: not ansible_check_mode
