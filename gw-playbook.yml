@@ -105,11 +105,11 @@
               auto_https off
           }
           http://speed.ffp {
-              bind 10.22.0.{{ gw_number }} 10.22.16.{{ gw_number }} [fdc0:ffee:a10::{{ gw_number }}:0:0] [fdc0:ffee:a10:10:0:{{ gw_number }}::]
+              bind [fdc0:ffee:a10::{{ gw_number }}:0:0] [fdc0:ffee:a10:10:0:{{ gw_number }}::]
               redir http://speedtest.ffp
           }
           http://speedtest.ffp {
-              bind 10.22.0.{{ gw_number }} 10.22.16.{{ gw_number }} [fdc0:ffee:a10::{{ gw_number }}:0:0] [fdc0:ffee:a10:10:0:{{ gw_number }}::]
+              bind [fdc0:ffee:a10::{{ gw_number }}:0:0] [fdc0:ffee:a10:10:0:{{ gw_number }}::]
               reverse_proxy [::1]:8880 127.0.0.1:8880
           }
           http://ipv4.speedtest.ffp {
