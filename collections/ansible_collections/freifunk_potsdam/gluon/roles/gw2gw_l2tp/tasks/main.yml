@@ -8,7 +8,7 @@
     owner: root
     group: root
     mode: "0644"
-  loop: "{{ hostvars | flatten }}"
+  loop: "{{ groups['ffp_gw'] | flatten }}"
   when: hostvars[item].inventory_hostname != inventory_hostname
   notify:
     - Restart systemd-networkd
@@ -18,7 +18,7 @@
 - name: "Systemd-networkd: Run bla…"
   ansible.builtin.include_tasks:
     file: l2tp-network.yml
-  loop: "{{ hostvars | flatten }}"
+  loop: "{{ groups['ffp_gw'] | flatten }}"
   loop_control:
     loop_var: host_item
   when: hostvars[host_item].inventory_hostname != inventory_hostname
