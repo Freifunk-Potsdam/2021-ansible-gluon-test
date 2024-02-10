@@ -59,6 +59,9 @@ nftables_tables:
             # statement: "tcp dport {22, 2424} ct state new limit rate 15/minute accept"
             statement: "tcp dport 2424 ct state new limit rate 3/minute accept"
             comment: "allow ssh"
+          - position: 55
+            statement: "tcp dport {80, 443} ct state new accept"
+            comment: "allow http/https"
           - position: 60
             statement: "udp dport 10000 ct state new accept"
             comment: "allow fastd tunnel ingress (domain 0)"

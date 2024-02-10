@@ -12,6 +12,7 @@
     - stuvusit.systemd-journald
     - hafu.systemd_timesyncd
     - ssh_hardening
+    - prometheus.prometheus.node_exporter
     # collection: freifunk_potsdam.gluon
     - system_packages
     - default_network
@@ -104,7 +105,11 @@
         dest: /etc/caddy/Caddyfile
         content: |
           {
-              auto_https off
+              email hannes+ffp-caddy-gw{{ gw_number }}@0xef.de
+              skip_install_trust
+              servers {
+                metrics
+              }
           }
           http://speed.ffp {
               bind [fdc0:ffee:a10::{{ gw_number }}:0:0] [fdc0:ffee:a10:10:0:{{ gw_number }}::]
@@ -129,6 +134,13 @@
           http://gw{{ gw_number }}-ipv6-backend.speedtest.ffp {
               bind [fdc0:ffee:a10::{{ gw_number }}:0:0] [fdc0:ffee:a10:10:0:{{ gw_number }}::]
               reverse_proxy [::1]:8881
+          }
+          https://gw{{ gw_number }}.freifunk-potsdam.de {
+              bind [{{ ansible_default_ipv6.address|default(ansible_all_ipv6_addresses[0]) }}] {{ ansible_default_ipv4.address|default(ansible_all_ipv4_addresses[0]) }}
+              @blocked not remote_ip 2603:c020:801d:3900:8a2e:f69b:a8e2:cd76 130.61.102.150
+              respond @blocked "Access Denied" 403
+              reverse_proxy /metrics/node [::1]:9100
+              metrics /metrics/caddy
           }
         owner: root
         group: root
