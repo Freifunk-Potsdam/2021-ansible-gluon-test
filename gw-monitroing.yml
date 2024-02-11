@@ -1,0 +1,455 @@
+---
+- hosts:
+    - gw-monitoring
+
+  collections:
+    - devsec.hardening
+
+  roles:
+    - weareinteractive.users
+    - Frzk.nftables
+    - stuvusit.systemd-journald
+    - hafu.systemd_timesyncd
+    - ssh_hardening
+    - prometheus.prometheus.node_exporter
+
+  vars:
+    prometheus_config:
+      global:
+        scrape_interval: 15s
+      scrape_configs:
+        - job_name: prometheus
+          static_configs:
+            - targets: ["localhost:9090"]
+
+        - job_name: gw-node
+          scheme: https
+          metrics_path: /metrics/node
+          static_configs:
+            - targets:
+                - "gw1.freifunk-potsdam.de"
+                - "gw2.freifunk-potsdam.de"
+                - "gw3.freifunk-potsdam.de"
+          relabel_configs:
+            - source_labels: [__address__]
+              target_label: instance
+              regex: "([^:]+)(:[0-9]+)?"
+              replacement: "${1}"
+
+  pre_tasks:
+
+    - name: Allow users in group sudo to switch without password
+      ansible.builtin.lineinfile:
+        path: /etc/sudoers
+        state: present
+        regexp: '^%sudo\sALL='
+        line: '%sudo ALL=(ALL) NOPASSWD: ALL'
+        validate: /usr/sbin/visudo -cf %s
+
+    - name: Create xfs partion on block volume
+      community.general.parted:
+        device: /dev/sdb
+        label: gpt
+        name: "block-volume"
+        number: 1
+        state: present
+        fs_type: xfs
+
+    - name: Create xfs filesystem on block volume
+      community.general.filesystem:
+        fstype: xfs
+        dev: /dev/sdb1
+
+    - name: Mount the block volume
+      ansible.posix.mount:
+        fstype: xfs
+        path: /srv/block-volume
+        src: /dev/sdb1
+        state: mounted
+
+  tasks:
+
+    # caddy
+    - name: Install caddy dependencies
+      ansible.builtin.package:
+        name:
+          - debian-keyring
+          - debian-archive-keyring
+          - apt-transport-https
+          - curl
+        state: present
+
+    - name: Get caddy gpg key
+      ansible.builtin.get_url:
+        url: https://dl.cloudsmith.io/public/caddy/stable/gpg.key
+        dest: /usr/share/keyrings/caddy-stable-archive-keyring.gpg.download
+        mode: "0644"
+
+    - name: Convert gpg key
+      ansible.builtin.shell:  # noqa: no-changed-when
+        cmd: "set -o pipefail && cat /usr/share/keyrings/caddy-stable-archive-keyring.gpg.download \
+              | gpg --dearmor -o - > /usr/share/keyrings/caddy-stable-archive-keyring.gpg"
+        executable: /bin/bash
+
+    - name: Add caddy apt repository
+      ansible.builtin.apt_repository:
+        filename: caddy-stable.list
+        repo: "deb [signed-by=/usr/share/keyrings/caddy-stable-archive-keyring.gpg] https://dl.cloudsmith.io/public/caddy/stable/deb/debian any-version main"
+        state: present
+
+    - name: Install caddy
+      ansible.builtin.package:
+        name:
+          - caddy
+        state: present
+      when: not ansible_check_mode
+      notify:
+        - Enable caddy
+
+    - name: Generate Caddyfile
+      ansible.builtin.copy:
+        dest: /etc/caddy/Caddyfile
+        content: |
+          {
+              email hannes+ffp-gw-monitoring@0xef.de
+              skip_install_trust
+              servers {
+                metrics
+              }
+          }
+          http://localhost {
+              bind [::1]
+          }
+          https://gw-monitoring.ffp.oci.0xef.de {
+              bind [{{ ansible_default_ipv6.address|default(ansible_all_ipv6_addresses[0]) }}] {{ ansible_default_ipv4.address|default(ansible_all_ipv4_addresses[0]) }}
+
+              redir /grafana /grafana/
+              reverse_proxy /grafana/* [::1]:3000
+          }
+        owner: root
+        group: root
+        mode: "0644"
+      notify:
+        - Reload caddy
+    # END: caddy
+
+    # prometheus + grafana
+    - name: Install podman
+      ansible.builtin.package:
+        name:
+          - podman
+          - acl     # beckome_user
+        state: present
+
+    - name: Create containers user
+      register: containers_user
+      ansible.builtin.user:
+        name: containers
+        shell: /bin/bash
+        home: /srv/containers/home
+
+    - name: Create directory for volumes on block volume
+      ansible.builtin.file:
+        path: /srv/block-volume/containers-user/.local/share/containers/storage/volumes
+        state: directory
+        owner: containers
+        group: containers
+        mode: "0750"
+
+    - name: Make sure directory for bind mount exists
+      ansible.builtin.file:
+        path: /srv/containers/home/.local/share/containers/storage/volumes
+        state: directory
+        owner: containers
+        group: containers
+        mode: "0750"
+
+    - name: Create bind mount for volumes to block volume
+      ansible.posix.mount:
+        fstype: none
+        opts: bind
+        path: /srv/containers/home/.local/share/containers/storage/volumes
+        src: /srv/block-volume/containers-user/.local/share/containers/storage/volumes
+        state: mounted
+
+          #    - name: Run podman migrate
+          #      ansible.builtin.command:
+          #        cmd: "podman system migrate"
+          #      when: containers_user.changed
+          #
+    - name: Run podman migrate as containers user
+      become: true
+      become_user: containers
+      ansible.builtin.command:  # noqa: no-changed-when
+        cmd: "podman system migrate"
+      when: not ansible_check_mode and containers_user.changed
+
+    - name: Check if containers user lingers
+      register: linger_containers
+      ansible.builtin.stat:
+        path: /var/lib/systemd/linger/containers
+
+    - name: Enable linger for user containers
+      ansible.builtin.command: loginctl enable-linger containers  # noqa: no-changed-when
+      when: not linger_containers.stat.exists
+
+    - name: Check if podman socket exists
+      register: containers_podman_socket_stat
+      ansible.builtin.stat:
+        path: /srv/containers/home/.config/systemd/user/sockets.target.wants/podman.socket
+
+    - name: Enable podman socket for user containers
+      become: true
+      become_user: containers
+      # ansible.builtin.command: systemctl --user enable --now podman.socket
+      ansible.builtin.systemd_service:
+        name: podman.socket
+        enabled: true
+        scope: user
+        state: started
+      environment:
+        XDG_RUNTIME_DIR: "/run/user/{{ containers_user.uid }}"
+      when: not ansible_check_mode and not containers_podman_socket_stat.stat.exists
+
+    - name: Enable podman service
+      become: true
+      become_user: containers
+      ansible.builtin.systemd_service:
+        name: podman.service
+        scope: user
+        enabled: true
+        state: started
+      environment:
+        XDG_RUNTIME_DIR: "/run/user/{{ containers_user.uid }}"
+
+    - name: Check if podman podman-auto-update.timer exists
+      register: containers_podman_auto_update_timer
+      ansible.builtin.stat:
+        path: /srv/containers/home/.config/systemd/user/timers.target.wants/podman-auto-update.timer
+
+          # TODO
+          # - name: Enable podman-auto-update.timer
+          #   become_user: containers
+          #   ansible.builtin.command: systemctl --user enable --now podman-auto-update.timer
+          #   environment:
+          #     XDG_RUNTIME_DIR: "/run/user/{{ containers_user.uid }}"
+          #   when: not ansible_check_mode and not containers_podman_auto_update_timer.stat.exists
+
+    - name: Create directory for prometheus configurtion
+      ansible.builtin.file:
+        path: /srv/containers/home/containers/prometheus-config
+        state: directory
+        owner: containers
+        group: containers
+        mode: "0755"
+
+    - name: Create prometheus configuration
+      register: prometheus_config
+      ansible.builtin.copy:
+        dest: /srv/containers/home/containers/prometheus-config/prometheus.yml
+        content: "{{ prometheus_config | to_yaml }}"
+        owner: containers
+        group: containers
+        mode: "0644"
+
+    - name: Create network for prometheus
+      become: true
+      become_user: containers
+      containers.podman.podman_network:
+        name: prometheus
+        ipv6: true
+        subnet: "fdb2:7b5c:a95a:9e25::/64"
+
+    # NOTE: this is needed or it fails, don't know why…
+    - name: Fix cni version for prometheus network
+      ansible.builtin.replace:
+        path: /srv/containers/home/.config/cni/net.d/prometheus.conflist
+        regexp: '^(\s+)"cniVersion": "\d+\.\d+\.\d+",\s?$'
+        replace: '\1"cniVersion": "0.4.0",'
+
+    - name: Create prometheus container
+      become: true
+      become_user: containers
+      containers.podman.podman_container:
+        force_restart: "{{ prometheus_config.changed }}"
+        name: prometheus
+        image: docker.io/prom/prometheus
+        hostname: prometheus
+        # memory: 512mb
+        # memory_swap: 0
+        # Extend command to store data longer
+        # See:
+        #   - https://github.com/prometheus/prometheus/blob/main/Dockerfile
+        #   - https://prometheus.io/docs/prometheus/latest/storage/#operational-aspects
+        command:
+          - "--config.file=/etc/prometheus/prometheus.yml"
+          - "--storage.tsdb.path=/prometheus"
+          - "--web.console.libraries=/usr/share/prometheus/console_libraries"
+          - "--web.console.templates=/usr/share/prometheus/consoles"
+          - "--storage.tsdb.retention.time=365d"
+        label:
+          io.containers.autoupdate: registry
+        volume:
+          - "/srv/containers/home/containers/prometheus-config:/etc/prometheus:ro"
+          - "prometheus-data:/prometheus"
+        ports:
+          - "127.0.0.1:9090:9090"
+          - "[::1]:9090:9090"
+        network: prometheus
+            # restart_policy:
+            #   - always
+            # generate_systemd:
+            #   path: /srv/containers/home/.config/systemd/user
+            #   restart_policy: always
+            #   restart_sec: 30
+
+    - name: Create grafana container
+      become: true
+      become_user: containers
+      containers.podman.podman_container:
+        name: grafana
+        image: docker.io/grafana/grafana
+        hostname: grafana
+        # memory: 512mb
+        # memory_swap: 0
+        label:
+          io.containers.autoupdate: registry
+        env:
+          GF_SERVER_DOMAIN: "gw-monitoring.ffp.oci.0xef.de"
+          GF_SERVER_ENFORCE_DOMAIN: "true"
+          GF_SERVER_ROOT_URL: "https://gw-monitoring.ffp.oci.0xef.de/grafana"
+          GF_SERVER_SERVE_FROM_SUB_PATH: "true"
+          GF_SERVER_ENABLE_GZIP: "true"
+          GF_ANALYTICS_REPORTING_ENABLED: "false"
+          GF_SECURITY_DISABLE_INITIAL_ADMIN_CREATION: "true"
+          GF_SECURITY_COOKIE_SECURE: "true"
+          # GF_SECURITY_ALLOW_EMBEDDING: "true"
+          GF_SECURITY_STRICT_TRANSPORT_SECURITY: "true"
+          GF_AUTH_DISABLE_LOGIN_FORM: "true"
+          GF_AUTH_GITHUB_ENABLED: "true"
+          GF_AUTH_GITHUB_CLIENT_ID: "{{ github_oauth_client_id }}"
+          GF_AUTH_GITHUB_CLIENT_SECRET: "{{ github_oaut_client_secret }}"
+          # GF_AUTH_GITHUB_ALLOW_SIGN_UP: "false"
+          GF_AUTH_GITHUB_ALLOW_ASSIGN_GRAFANA_ADMIN: "true"
+          GF_AUTH_GITHUB_ALLOWED_ORGANIZATIONS: "['Freifunk-Potsdam']"
+          GF_AUTH_GITHUB_ROLE_ATTRIBUTE_PATH: "[login=='hafu'][0] && 'GrafanaAdmin' || 'Viewer'"
+        volume:
+          - "grafana-data:/var/lib/grafana"
+        ports:
+          - "[::1]:3000:3000/tcp"
+        network: prometheus
+            # restart_policy:
+            #   - always
+            # generate_systemd:
+            #   path: /srv/containers/home/.config/systemd/user
+            #   restart_policy: always
+            #   restart_sec: 30
+
+
+
+        #    - name: Create network for traefik
+        #      become_user: containers
+        #      containers.podman.podman_network:
+        #        name: traefik
+        #        ipv6: true
+        #        subnet: "fd0b:63cf:e421::/64"
+        #
+        #    # NOTE: this is needed or it fails, don't know why…
+        #    - name: Fix cni version for traefik network
+        #      ansible.builtin.replace:
+        #        path: /srv/containers/home/.config/cni/net.d/traefik.conflist
+        #        regexp: '^(\s+)"cniVersion": "\d+\.\d+\.\d+",\s?$'
+        #        replace: '\1"cniVersion": "0.4.0",'
+        #
+        #
+        #    - name: Create directory for frontend configuration
+        #      ansible.builtin.file:
+        #        path: /srv/containers/home/containers/librespeed-frontend
+        #        state: directory
+        #        owner: containers
+        #        group: containers
+        #        mode: "0755"
+        #
+        #    - name: Create librespeed frontend configuration
+        #      register: librespeed_frontend_config
+        #      ansible.builtin.copy:
+        #        dest: /srv/containers/home/containers/librespeed-frontend/servers.json
+        #        content: "{{ librespeed_frontend_config | to_json }}"
+        #        owner: containers
+        #        group: containers
+        #        mode: "0644"
+        #
+        #    - name: Create librespeed frontend container
+        #      become_user: containers
+        #      containers.podman.podman_container:
+        #        force_restart: "{{ librespeed_frontend_config.changed }}"
+        #        name: librespeed-frontend
+        #        image: ghcr.io/librespeed/speedtest:latest
+        #        hostname: librespeed-frontend{{ gw_number }}
+        #        #memory: 512mb
+        #        #memory_swap: 0
+        #        label:
+        #          io.containers.autoupdate: registry
+        #          #traefik.enable: true
+        #          #traefik.http.routers.librespeed-frontend.rule: Host(`speedtest.ffp`)
+        #          #traefik.http.routers.librespeed-frontend.entrypoints: web
+        #        env:
+        #          MODE: frontend
+        #          #TITLE: "LibreSpeed on gw{{ gw_number }}"
+        #          TITLE: "LibreSpeed"
+        #          DISABLE_IPINFO: true
+        #        volume:
+        #          - "/srv/containers/home/containers/librespeed-frontend/servers.json:/servers.json:ro"
+        #        #network: traefik
+        #        #network:
+        #        #  #- "podman:port_handler=slirp4netns"
+        #        #  - "traefik"
+        #        ports:
+        #          - "127.0.0.1:8880:80"
+        #          - "[::1]:8880:80"
+        #        restart_policy:
+        #          - always
+        #        generate_systemd:
+        #          path: /srv/containers/home/.config/systemd/user
+        #          restart_policy: always
+        #          restart_sec: 30
+        #
+        #    - name: Create librespeed backend container
+        #      become_user: containers
+        #      containers.podman.podman_container:
+        #        name: librespeed-backend
+        #        image: ghcr.io/librespeed/speedtest:latest
+        #        hostname: librespeed-backend{{ gw_number }}
+        #        #memory: 512mb
+        #        #memory_swap: 0
+        #        label:
+        #          io.containers.autoupdate: registry
+        #          #traefik.enable: true
+        #          #traefik.http.routers.librespeed-backend.rule: Host(`gw{{ gw_number }}-backend.speedtest.ffp`, `gw{{ gw_number }}-ipv4-backend.speedtest.ffp`, `gw{{ gw_number }}-ipv6-backend.speedtest.ffp`)
+        #          #traefik.http.routers.librespeed-backend.entrypoints: web
+        #        env:
+        #          MODE: backend
+        #        #network: traefik
+        #        ports:
+        #          - "127.0.0.1:8881:80"
+        #          - "[::1]:8881:80"
+        #        restart_policy:
+        #          - always
+        #        generate_systemd:
+        #          path: /srv/containers/home/.config/systemd/user
+        #          restart_policy: always
+        #          restart_sec: 30
+    # prometheus + grafana
+  handlers:
+    - name: "Enable caddy"
+      ansible.builtin.systemd_service:
+        name: caddy
+        enabled: true
+        state: started
+      when: not ansible_check_mode
+
+    - name: "Reload caddy"
+      ansible.builtin.systemd_service:
+        name: caddy
+        state: reloaded
+      when: not ansible_check_mode

@@ -1,0 +1,67 @@
+---
+
+nftables_primary_interface: "{{ ansible_default_ipv4.interface }}"
+nftables_default_ipv4_addr: "{{ ansible_default_ipv4.address | default(ansible_all_ipv4_addresses[0]) }}"
+nftables_default_ipv6_addr: "{{ ansible_default_ipv6.address | default(ansible_all_ipv6_addresses[0]) }}"
+
+nftables_config_file: /etc/nftables.conf
+nftables_tables:
+  - name: filter
+    family: inet
+    chains:
+      - name: "input"
+        base:
+          type: "filter"
+          hook: "input"
+          priority: 0
+          policy: "drop"
+        rules:
+          - position: 1
+            statement: "iifname lo accept"
+            comment: "allow from loopback"
+          - position: 8
+            statement: "ct state invalid drop"
+            comment: "early drop of invalid connections"
+          - position: 10
+            statement: "ip protocol icmp icmp type echo-request limit rate 10/second burst 3 packets accept"
+            comment: "allow icmp echo request (IPv4)"
+          - position: 11
+            statement: "counter ip protocol icmp icmp type echo-request drop"
+            comment: "count dropped icmp echo requests"
+          - position: 12
+            statement: "ip6 nexthdr icmpv6 icmpv6 type echo-request limit rate 10/second burst 3 packets accept"
+            comment: "allow icmpv6 echo request"
+          - position: 13
+            statement: "counter ip6 nexthdr icmpv6 icmpv6 type echo-request drop"
+            comment: "count dropped icmpv6 echo requests"
+          - position: 20
+            statement: "ct state {established, related} accept"
+            comment: "allow established/related connections"
+          - position: 30
+            statement: "ip protocol icmp icmp type \
+                        {destination-unreachable, router-solicitation, router-advertisement, time-exceeded, parameter-problem} accept"
+            comment: "allow icmp (IPv4)"
+          - position: 31
+            statement: "ip6 nexthdr icmpv6 icmpv6 type \
+                        {destination-unreachable, packet-too-big, time-exceeded, parameter-problem, mld-listener-query, \
+                        mld-listener-report, mld-listener-reduction, nd-router-solicit, nd-router-advert, nd-neighbor-solicit, \
+                        nd-neighbor-advert, ind-neighbor-solicit, ind-neighbor-advert, mld2-listener-report} accept"
+            comment: "allow icmpv6"
+          - position: 32
+            statement: "ip6 daddr fe80::/64 udp dport 546 ct state new iif \"{{ nftables_primary_interface }}\" accept"
+            comment: "allow DHCPv6 client"
+          - position: 50
+            # statement: "tcp dport {22, 2424} ct state new limit rate 15/minute accept"
+            statement: "tcp dport 2424 ct state new limit rate 3/minute accept"
+            comment: "allow ssh"
+          - position: 55
+            statement: "tcp dport {80, 443} ct state new accept"
+            comment: "allow http/https"
+          - position: 100
+            statement: "counter reject with icmpx type port-unreachable"
+            comment: "reject everything else politely"
+      - name: "output"
+        base:
+          type: "filter"
+          hook: "output"
+          priority: 0
