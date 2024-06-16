@@ -3,19 +3,20 @@ name = "ffp-gluon-test"
 version = "0.1.0"
 description = "Ansible FFP Gluon Test Setup"
 authors = ["Hannes Fuchs <hannes.fuchs@gmx.org>"]
+package-mode = false
 
 [tool.poetry.dependencies]
-python = ">=3.9,<4.0"
-ansible = "^7.2.0"
+python = ">=3.10,<4.0"
+ansible = "^10.0.1"
 # needed for ansible templates for IP address calculations
-netaddr = "^0.8.0"
-dnspython = "^2.3.0"
+netaddr = "^1.3.0"
+dnspython = "^2.6.1"
 
 [tool.poetry.dev-dependencies]
 
 [tool.poetry.group.dev.dependencies]
 # https://github.com/ansible/ansible-lint/issues/2730#issuecomment-1330406601
-ansible-lint = { version = "^6.12.0", markers = "platform_system != 'Windows'" }
+ansible-lint = { version = "^24.6.0", markers = "platform_system != 'Windows'" }
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
