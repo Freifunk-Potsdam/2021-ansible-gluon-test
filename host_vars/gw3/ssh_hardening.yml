@@ -1,0 +1,4 @@
+---
+ssh_listen_to:
+  - "[::]"
+  - "{{ ansible_default_ipv4.address | default('0.0.0.0') }}"

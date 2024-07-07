@@ -1,17 +1,6 @@
 ---
 default_network_match:
-  MACAddress: "00:50:56:3f:af:1e"
-
-default_network_ipv4_address: 95.111.234.135/20
-default_network_ipv4_gateway: 95.111.234.1
-default_network_ipv6_address: 2a02:c207:3005:3283::1/64
-default_network_ipv6_gateway: fe80::1
-
-default_network_dns_servers:
-  - 2a02:c207::1:53
-  - 2a02:c207::2:53
-  - 213.136.95.10
-  - 213.136.95.11
+  Name: "en*"
 
 default_network_network_section_extra_options:
   - L2TP: l2tpg3t1
