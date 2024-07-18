@@ -35,11 +35,11 @@ wireguard_client_private_key: !vault |
 #wireguard_client_public_key: XgSe9UwEV4JJNPPzFFOVYS6scMTL4DeNlwqBl32lDw0=
 #wireguard_client_endpoint: "[2a03:d9c0:3000::a22f]:51820"
 # de-fra-wg-003 (IPv6) 
-#wireguard_client_public_key: vVQKs2TeTbdAvl3sH16UWLSESncXAj0oBaNuFIUkLVk=
-#wireguard_client_endpoint: "[2a03:1b20:6:f011::f201]:51820"
+wireguard_client_public_key: vVQKs2TeTbdAvl3sH16UWLSESncXAj0oBaNuFIUkLVk=
+wireguard_client_endpoint: "[2a03:1b20:6:f011::f201]:51820"
 # de-fra-wg-005 (IPv6)
-wireguard_client_public_key: tpobOO6t18CzHjOg0S3RlZJMxd2tz4+BnRYS7NrjTnM=
-wireguard_client_endpoint: "[2a03:1b20:6:f011::f401]:51820"
+#wireguard_client_public_key: tpobOO6t18CzHjOg0S3RlZJMxd2tz4+BnRYS7NrjTnM=
+#wireguard_client_endpoint: "[2a03:1b20:6:f011::f401]:51820"
 # de-fra-wg-006 (IPv6)
 #wireguard_client_public_key: nAF0wrLG2+avwQfqxnXhBGPUBCvc3QCqWKH4nK5PfEU=
 #wireguard_client_endpoint: "[2a03:1b20:6:f011::f501]:51820"
