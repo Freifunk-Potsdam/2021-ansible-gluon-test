@@ -27,3 +27,32 @@
   ansible.builtin.systemd:
     name: systemd-networkd.service
     enabled: true
+
+# Set the hardware interface hop penalty via networkd-dispatcher
+# NOTE: Currently this is not possible to set via systemd-networkd via a
+#       .netdev or .network file directly
+- name: "Networkd-dispatcher: Make sure is installed"
+  ansible.builtin.package:
+    name: networkd-dispatcher
+    state: present
+
+- name: "Networkd-dispatcher: Make sure configured.d directory exists"
+  ansible.builtin.file:
+    path: /etc/networkd-dispatcher/configured.d
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: "Networkd-dispatcher: Copy script to set hop penalty"
+  ansible.builtin.template:
+    src: 99-l2tp-hardif-hp.sh.j2
+    dest: /etc/networkd-dispatcher/configured.d/99-l2tp-hardif-hp.sh
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: "Networkd-dispatcher: Make sure service is enabled"
+  ansible.builtin.systemd:
+    name: networkd-dispatcher.service
+    enabled: true

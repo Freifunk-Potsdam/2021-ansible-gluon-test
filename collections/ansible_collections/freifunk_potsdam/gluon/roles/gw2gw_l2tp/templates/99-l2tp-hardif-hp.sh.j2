@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+
+# check and abort on unbound vars
+set -o nounset
+# show errors in pipes
+set -o pipefail
+
+HOP_PENALTY={{ gw2gw_l2tp_hop_penalty | default(0) }}
+
+if [[ -n "$IFACE" ]] && [[ "$IFACE" =~ ^l2tpg.*$ ]]; then
+    echo "Set hop penalty of interface $IFACE to $HOP_PENALTY" | systemd-cat -t "networkd-dispatcher-$(basename "$0")"
+    batctl hardif "$IFACE" hp "$HOP_PENALTY"
+fi
