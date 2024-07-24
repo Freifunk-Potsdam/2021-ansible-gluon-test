@@ -25,6 +25,13 @@
     - bind_server
     - radvd
 
+  vars:
+    # to map correct package arch from host facts
+    deb_architecture: {
+      "aarch64": "arm64",
+      "x86_64": "amd64"
+    }
+
   pre_tasks:
 
     - name: Allow users in group sudo to switch without password
@@ -100,6 +107,71 @@
       notify:
         - Enable caddy
 
+    # NOTE: download may fails first time, try it again
+    - name: Download caddy binary with caddy-dns/netcup
+      retries: 3
+      delay: 5
+      ansible.builtin.get_url:
+        # https://caddyserver.com/api/download?os=linux&arch=amd64&p=github.com%2Fcaddy-dns%2Fnetcup%40main&idempotency=78516415918312
+        url: "https://caddyserver.com/api/download?os=linux&arch={{ deb_architecture[ansible_architecture] }}&p=github.com%2Fcaddy-dns%2Fnetcup%40main&idempotency={{ 99999999999999 | ansible.builtin.random(start=10000000000000, seed=ansible_date_time.iso8601_basic) }}"
+        dest: /usr/local/bin/caddy.custom
+        owner: root
+        group: root
+        mode: "0755"
+
+    # https://caddyserver.com/docs/build#package-support-files-for-custom-builds-for-debianubunturaspbian
+    - name: Divert /usr/bin/caddy to /usr/bin/caddy.default
+      community.general.dpkg_divert:
+        path: /usr/bin/caddy
+        divert: /usr/bin/caddy.default
+        rename: true
+
+    - name: Add alternatives for default caddy file with low priority
+      community.general.alternatives:
+        name: caddy
+        link: /usr/bin/caddy
+        path: /usr/bin/caddy.default
+        priority: 10
+        state: auto
+      when: not ansible_check_mode
+      notify:
+        - Restart caddy
+
+    - name: Add alternatives for custom caddy file with high priority
+      community.general.alternatives:
+        name: caddy
+        link: /usr/bin/caddy
+        path: /usr/local/bin/caddy.custom
+        priority: 50
+        state: auto
+      when: not ansible_check_mode
+      notify:
+        - Restart caddy
+
+    - name: Create directory for Caddy service override
+      ansible.builtin.file:
+        path: /etc/systemd/system/caddy.service.d
+        state: directory
+        owner: root
+        group: root
+        mode: "0755"
+
+    - name: Create override file for Caddy service
+      ansible.builtin.copy:
+        dest: /etc/systemd/system/caddy.service.d/environment.conf
+        content: |
+          [Service]
+          Environment=NETCUP_CUSTOMER_NUMBER={{ caddy_netcup_customer_number }}
+          Environment=NETCUP_API_KEY={{ caddy_netcup_api_key }}
+          Environment=NETCUP_API_PASSWORD={{ caddy_netcup_api_password }}
+        owner: root
+        group: root
+        mode: "0640"
+      no_log: true
+      notify:
+        - Systemd daemon-reload
+        - Restart caddy
+
     - name: Generate Caddyfile
       ansible.builtin.copy:
         dest: /etc/caddy/Caddyfile
@@ -111,29 +183,69 @@
                 metrics
               }
           }
+          (netcup_dns_tls) {
+              tls {
+                  dns netcup {
+                      customer_number {env.NETCUP_CUSTOMER_NUMBER}
+                      api_key {env.NETCUP_API_KEY}
+                      api_password {env.NETCUP_API_PASSWORD}
+                  }
+                  dns_challenge_override_domain _acme-challenge_gw{{ gw_number }}_ffp_name.freifunk-potsdam.de
+                  propagation_timeout 900s
+                  propagation_delay 600s
+                  resolvers 1.1.1.1
+              }
+          }
           http://speed.ffp {
-              bind [fdc0:ffee:a10::{{ gw_number }}:0:0] [fdc0:ffee:a10:10:0:{{ gw_number }}::]
-              redir http://speedtest.ffp
+              bind [fdc0:ffee:a10::{{ gw_number }}:0:0] [fdc0:ffee:a10:10:0:{{ gw_number }}::] 10.22.0.{{ gw_number }} 10.22.16.{{ gw_number }}
+              redir https://speed.gw{{ gw_number }}.int.ffp.name
           }
           http://speedtest.ffp {
-              bind [fdc0:ffee:a10::{{ gw_number }}:0:0] [fdc0:ffee:a10:10:0:{{ gw_number }}::]
-              reverse_proxy [::1]:8880 127.0.0.1:8880
+              bind [fdc0:ffee:a10::{{ gw_number }}:0:0] [fdc0:ffee:a10:10:0:{{ gw_number }}::] 10.22.0.{{ gw_number }} 10.22.16.{{ gw_number }}
+              redir https://speed.gw{{ gw_number }}.int.ffp.name
           }
           http://ipv4.speedtest.ffp {
               bind 10.22.0.{{ gw_number }} 10.22.16.{{ gw_number }}
-              reverse_proxy 127.0.0.1:8880
+              redir https://speed4.gw{{ gw_number }}.int.ffp.name
           }
           http://ipv6.speedtest.ffp {
               bind [fdc0:ffee:a10::{{ gw_number }}:0:0] [fdc0:ffee:a10:10:0:{{ gw_number }}::]
+              redir https://speed6.gw{{ gw_number }}.int.ffp.name
+          }
+          http://speed.ffp.name {
+              bind [fdc0:ffee:a10::{{ gw_number }}:0:0] 10.22.0.{{ gw_number }}
+              redir https://speed.gw{{ gw_number }}.int.ffp.name
+          }
+          http://speed4.ffp.name {
+              bind 10.22.0.{{ gw_number }}
+              redir https://speed4.gw{{ gw_number }}.int.ffp.name
+          }
+          http://speed6.ffp.name {
+              bind [fdc0:ffee:a10::{{ gw_number }}:0:0]
+              redir https://speed6.gw{{ gw_number }}.int.ffp.name
+          }
+          https://speed.gw{{ gw_number }}.int.ffp.name {
+              bind [fdc0:ffee:a10::{{ gw_number }}:0:0] 10.22.0.{{ gw_number }}
+              reverse_proxy [::1]:8880 127.0.0.1:8880
+              import netcup_dns_tls
+          }
+          https://speed4.gw{{ gw_number }}.int.ffp.name {
+              bind 10.22.0.{{ gw_number }}
+              handle_path /api/* {
+                  rewrite * /{uri}
+                  reverse_proxy 127.0.0.1:8881
+              }
+              reverse_proxy 127.0.0.1:8880
+              import netcup_dns_tls
+          }
+          https://speed6.gw{{ gw_number }}.int.ffp.name {
+              bind [fdc0:ffee:a10::{{ gw_number }}:0:0]
+              handle_path /api/* {
+                  rewrite * /{uri}
+                  reverse_proxy [::1]:8881
+              }
               reverse_proxy [::1]:8880
-          }
-          http://gw{{ gw_number }}-ipv4-backend.speedtest.ffp {
-              bind 10.22.0.{{ gw_number }} 10.22.16.{{ gw_number }}
-              reverse_proxy 127.0.0.1:8881
-          }
-          http://gw{{ gw_number }}-ipv6-backend.speedtest.ffp {
-              bind [fdc0:ffee:a10::{{ gw_number }}:0:0] [fdc0:ffee:a10:10:0:{{ gw_number }}::]
-              reverse_proxy [::1]:8881
+              import netcup_dns_tls
           }
           https://gw{{ gw_number }}.freifunk-potsdam.de {
               bind [{{ ansible_default_ipv6.address|default(ansible_all_ipv6_addresses[0]) }}] {{ ansible_default_ipv4.address|default(ansible_all_ipv4_addresses[0]) }}
@@ -324,6 +436,11 @@
     # END librespeed
 
   handlers:
+    - name: "Systemd daemon-reload"
+      ansible.builtin.systemd_service:
+        daemon_reload: true
+      when: not ansible_check_mode
+
     - name: "Restart systemd-networkd"
       ansible.builtin.systemd:
         service: systemd-networkd
@@ -334,6 +451,12 @@
         name: caddy
         enabled: true
         state: started
+      when: not ansible_check_mode
+
+    - name: "Restart caddy"
+      ansible.builtin.systemd_service:
+        name: caddy
+        state: restarted
       when: not ansible_check_mode
 
     - name: "Reload caddy"

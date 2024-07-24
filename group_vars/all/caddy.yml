@@ -1,0 +1,4 @@
+---
+caddy_netcup_customer_number: "{{ vault_caddy_netcup_customer_number }}"
+caddy_netcup_api_key: "{{ vault_caddy_netcup_api_key }}"
+caddy_netcup_api_password: "{{ vault_caddy_netcup_api_password }}"

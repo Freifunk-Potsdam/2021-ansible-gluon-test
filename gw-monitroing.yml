@@ -36,6 +36,56 @@
               regex: "([^:]+)(:[0-9]+)?"
               replacement: "${1}"
 
+    librespeed_frontend_config:
+      - name: "Gateway 1 (Intern, IPv4)"
+        server: "https://gw1-ipv4-speedtest-backend.internal.ffp.oci.0xef.de/"
+        dlURL: "garbage.php"
+        ulURL: "empty.php"
+        pingURL: "empty.php"
+        getIpURL: "getIP.php"
+      - name: "Gateway 1 (Intern, IPv6)"
+        server: "https://gw1-ipv6-speedtest-backend.internal.ffp.oci.0xef.de/"
+        dlURL: "garbage.php"
+        ulURL: "empty.php"
+        pingURL: "empty.php"
+        getIpURL: "getIP.php"
+      - name: "Gateway 2 (Intern, IPv4)"
+        server: "https://gw2-ipv4-speedtest-backend.internal.ffp.oci.0xef.de/"
+        dlURL: "garbage.php"
+        ulURL: "empty.php"
+        pingURL: "empty.php"
+        getIpURL: "getIP.php"
+      - name: "Gateway 2 (Intern, IPv6)"
+        server: "https://gw2-ipv6-speedtest-backend.internal.ffp.oci.0xef.de/"
+        dlURL: "garbage.php"
+        ulURL: "empty.php"
+        pingURL: "empty.php"
+        getIpURL: "getIP.php"
+      - name: "Gateway 3 (Intern, IPv4)"
+        server: "https://gw3-ipv4-speedtest-backend.internal.ffp.oci.0xef.de/"
+        dlURL: "garbage.php"
+        ulURL: "empty.php"
+        pingURL: "empty.php"
+        getIpURL: "getIP.php"
+      - name: "Gateway 3 (Intern, IPv6)"
+        server: "https://gw3-ipv6-speedtest-backend.internal.ffp.oci.0xef.de/"
+        dlURL: "garbage.php"
+        ulURL: "empty.php"
+        pingURL: "empty.php"
+        getIpURL: "getIP.php"
+      - name: "Frankfurt (Internet, IPv4)"
+        server: "https://ipv4-backend.speedtest.ffp.oci.0xef.de/"
+        dlURL: "garbage.php"
+        ulURL: "empty.php"
+        pingURL: "empty.php"
+        getIpURL: "getIP.php"
+      - name: "Frankfurt (Internet, IPv6)"
+        server: "https://ipv6-backend.speedtest.ffp.oci.0xef.de/"
+        dlURL: "garbage.php"
+        ulURL: "empty.php"
+        pingURL: "empty.php"
+        getIpURL: "getIP.php"
+
   pre_tasks:
 
     - name: Allow users in group sudo to switch without password
@@ -125,6 +175,18 @@
 
               redir /grafana /grafana/
               reverse_proxy /grafana/* [::1]:3000
+          }
+          https://speedtest.ffp.oci.0xef.de {
+              bind [{{ ansible_default_ipv6.address|default(ansible_all_ipv6_addresses[0]) }}] {{ ansible_default_ipv4.address|default(ansible_all_ipv4_addresses[0]) }}
+              reverse_proxy [::1]:8880 127.0.0.1:8880
+          }
+          https://ipv4-backend.speedtest.ffp.oci.0xef.de {
+              bind {{ ansible_default_ipv4.address|default(ansible_all_ipv4_addresses[0]) }}
+              reverse_proxy 127.0.0.1:8881
+          }
+          https://ipv6-backend.speedtest.ffp.oci.0xef.de {
+              bind [{{ ansible_default_ipv6.address|default(ansible_all_ipv6_addresses[0]) }}]
+              reverse_proxy [::1]:8881
           }
         owner: root
         group: root
@@ -345,7 +407,115 @@
             #   restart_policy: always
             #   restart_sec: 30
 
+    # librespeed
+    - name: Create directory for librespeed frontend configuration
+      ansible.builtin.file:
+        path: /srv/containers/home/containers/librespeed-frontend
+        state: directory
+        owner: containers
+        group: containers
+        mode: "0755"
 
+    - name: Create librespeed frontend configuration
+      register: librespeed_frontend_config
+      ansible.builtin.copy:
+        dest: /srv/containers/home/containers/librespeed-frontend/servers.json
+        content: "{{ librespeed_frontend_config | to_json }}"
+        owner: containers
+        group: containers
+        mode: "0644"
+
+    - name: Create librespeed frontend container
+      become: true
+      become_user: containers
+      containers.podman.podman_container:
+        force_restart: "{{ librespeed_frontend_config.changed }}"
+        name: librespeed-frontend
+        image: ghcr.io/librespeed/speedtest:latest
+        hostname: librespeed-frontend
+        memory: 64mb
+        memory_swap: 64mb
+        label:
+          io.containers.autoupdate: registry
+        env:
+          MODE: frontend
+          TITLE: "LibreSpeed"
+          DISABLE_IPINFO: true
+        volume:
+          - "/srv/containers/home/containers/librespeed-frontend/servers.json:/servers.json:ro"
+        ports:
+          - "127.0.0.1:8880:80"
+          - "[::1]:8880:80"
+        restart_policy: always
+
+    - name: Create systemd unit for librespeed-frontend container
+      become: true
+      become_user: containers
+      environment:
+        XDG_RUNTIME_DIR: "/run/user/{{ containers_user.uid }}"
+      containers.podman.podman_generate_systemd:
+        name: librespeed-frontend
+        new: true
+        dest: /srv/containers/home/.config/systemd/user
+        restart_policy: always
+      when: not ansible_check_mode
+
+    - name: Ensure librespeed-frontend container is started and enabled
+      become: true
+      become_user: containers
+      environment:
+        XDG_RUNTIME_DIR: "/run/user/{{ containers_user.uid }}"
+      ansible.builtin.systemd_service:
+        name: container-librespeed-frontend
+        daemon_reload: true
+        state: started
+        enabled: true
+        scope: user
+      when: not ansible_check_mode
+
+    - name: Create librespeed backend container
+      become: true
+      become_user: containers
+      containers.podman.podman_container:
+        name: librespeed-backend
+        image: ghcr.io/librespeed/speedtest:latest
+        hostname: librespeed-backend
+        memory: 128mb
+        memory_swap: 128mb
+        label:
+          io.containers.autoupdate: registry
+        env:
+          MODE: backend
+        ports:
+          - "127.0.0.1:8881:80"
+          - "[::1]:8881:80"
+        restart_policy: always
+
+    - name: Create systemd unit for librespeed-backend container
+      become: true
+      become_user: containers
+      environment:
+        XDG_RUNTIME_DIR: "/run/user/{{ containers_user.uid }}"
+      containers.podman.podman_generate_systemd:
+        name: librespeed-backend
+        new: true
+        dest: /srv/containers/home/.config/systemd/user
+        restart_policy: always
+      when: not ansible_check_mode
+
+    - name: Ensure librespeed-frontend container is started and enabled
+      become: true
+      become_user: containers
+      environment:
+        XDG_RUNTIME_DIR: "/run/user/{{ containers_user.uid }}"
+      ansible.builtin.systemd_service:
+        name: container-librespeed-backend
+        daemon_reload: true
+        state: started
+        enabled: true
+        scope: user
+      when: not ansible_check_mode
+    # END librespeed
 
         #    - name: Create network for traefik
         #      become_user: containers

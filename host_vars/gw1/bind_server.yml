@@ -1,7 +1,7 @@
 ---
 bind_server_zones:
   ffp:
-    serial: 2024020404
+    serial: 2024090101
     notify: "yes"
     allow_transfer_to:
       - "fdc0:ffee:a10::2:0:0"
@@ -34,114 +34,39 @@ bind_server_zones:
       - name: ns3
         type: AAAA
         value: "fdc0:ffee:a10:10:0:3::"
-#      - name: speedtest
-#        type: A
-#        value: 10.22.0.1
-#      - name: speedtest
-#        type: A
-#        value: 10.22.16.1
-      - name: speedtest
-        type: AAAA
-        value: "fdc0:ffee:a10::1:0:0"
-      - name: speedtest
-        type: AAAA
-        value: "fdc0:ffee:a10:10:0:1::"
-#      - name: speedtest
-#        type: A
-#        value: 10.22.0.2
-#      - name: speedtest
-#        type: A
-#        value: 10.22.16.2
-      - name: speedtest
-        type: AAAA
-        value: "fdc0:ffee:a10::2:0:0"
-      - name: speedtest
-        type: AAAA
-        value: "fdc0:ffee:a10:10:0:2::"
-#      - name: speedtest
-#        type: A
-#        value: 10.22.0.3
-#      - name: speedtest
-#        type: A
-#        value: 10.22.16.3
-      - name: speedtest
-        type: AAAA
-        value: "fdc0:ffee:a10::3:0:0"
-      - name: speedtest
-        type: AAAA
-        value: "fdc0:ffee:a10:10:0:3::"
-      - name: ipv4.speedtest
+      - name: speed
         type: A
         value: 10.22.0.1
-      - name: ipv4.speedtest
+      - name: speed
         type: A
         value: 10.22.16.1
-      - name: ipv4.speedtest
-        type: A
-        value: 10.22.0.2
-      - name: ipv4.speedtest
-        type: A
-        value: 10.22.16.2
-      - name: ipv4.speedtest
-        type: A
-        value: 10.22.0.3
-      - name: ipv4.speedtest
-        type: A
-        value: 10.22.16.3
-      - name: ipv6.speedtest
+      - name: speed
         type: AAAA
         value: "fdc0:ffee:a10::1:0:0"
-      - name: ipv6.speedtest
+      - name: speed
         type: AAAA
         value: "fdc0:ffee:a10:10:0:1::"
-      - name: ipv6.speedtest
-        type: AAAA
-        value: "fdc0:ffee:a10::2:0:0"
-      - name: ipv6.speedtest
-        type: AAAA
-        value: "fdc0:ffee:a10:10:0:2::"
-      - name: ipv6.speedtest
-        type: AAAA
-        value: "fdc0:ffee:a10::3:0:0"
-      - name: ipv6.speedtest
-        type: AAAA
-        value: "fdc0:ffee:a10:10:0:3::"
-      - name: gw1-ipv6-backend.speedtest
-        type: AAAA
-        value: "fdc0:ffee:a10::1:0:0"
-      - name: gw1-ipv6-backend.speedtest
-        type: AAAA
-        value: "fdc0:ffee:a10:10:0:1::"
-      - name: gw1-ipv4-backend.speedtest
-        type: A
-        value: 10.22.0.1
-      - name: gw1-ipv4-backend.speedtest
-        type: A
-        value: 10.22.16.1
-      - name: gw2-ipv6-backend.speedtest
-        type: AAAA
-        value: "fdc0:ffee:a10::2:0:0"
-      - name: gw2-ipv6-backend.speedtest
-        type: AAAA
-        value: "fdc0:ffee:a10:10:0:2::"
-      - name: gw2-ipv4-backend.speedtest
+      - name: speed
         type: A
         value: 10.22.0.2
-      - name: gw2-ipv4-backend.speedtest
+      - name: speed
         type: A
         value: 10.22.16.2
-      - name: gw3-ipv6-backend.speedtest
+      - name: speed
         type: AAAA
-        value: "fdc0:ffee:a10::3:0:0"
-      - name: gw3-ipv6-backend.speedtest
+        value: "fdc0:ffee:a10::2:0:0"
+      - name: speed
         type: AAAA
-        value: "fdc0:ffee:a10:10:0:3::"
-      - name: gw3-ipv4-backend.speedtest
+        value: "fdc0:ffee:a10:10:0:2::"
+      - name: speed
         type: A
         value: 10.22.0.3
-      - name: gw3-ipv4-backend.speedtest
+      - name: speed
         type: A
         value: 10.22.16.3
       - name: speed
-        type: CNAME
-        value: speedtest.ffp.
+        type: AAAA
+        value: "fdc0:ffee:a10::3:0:0"
+      - name: speed
+        type: AAAA
+        value: "fdc0:ffee:a10:10:0:3::"
