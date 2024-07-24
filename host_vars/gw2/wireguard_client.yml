@@ -25,6 +25,9 @@ wireguard_client_private_key: !vault |
 # de-ber-wg-006 (IPv6)
 #wireguard_client_public_key: eprzkkkSbXCANngQDo305DIAvkKAnZaN71IpTNaOoTk=
 #wireguard_client_endpoint: "[2a03:1b20:b:f011::a06f]:51820"
+# de-ber-wg-007 (IPv6)
+#wireguard_client_public_key: /ejdxiEsmYbeXXCN6UzvzJ0U/mLuB6baIfQRYKYHWzU=
+#wireguard_client_endpoint: "[2a03:1b20:b:f011::f701]:51820"
 # de-dus-wg-001 (IPv6)
 #wireguard_client_public_key: ku1NYeOAGbY65YL/JKZhrqVzDJKXQiVj9USXbfkOBA0=
 #wireguard_client_endpoint: "[2a03:d9c0:3000::a20f]:51820"
@@ -34,9 +37,18 @@ wireguard_client_private_key: !vault |
 # de-dus-wg-003 (IPv6)
 #wireguard_client_public_key: XgSe9UwEV4JJNPPzFFOVYS6scMTL4DeNlwqBl32lDw0=
 #wireguard_client_endpoint: "[2a03:d9c0:3000::a22f]:51820"
-# de-fra-wg-003 (IPv6) 
+# de-fra-wg-001 (IPv6)
+#wireguard_client_public_key: HQHCrq4J6bSpdW1fI5hR/bvcrYa6HgGgwaa5ZY749ik=
+#wireguard_client_endpoint: "[2a03:1b20:6:f011::f001]:51820"
+# de-fra-wg-002 (IPv6)
+#wireguard_client_public_key: s1c/NsfnqnwQSxao70DY4Co69AFT9e0h88IFuMD5mjs=
+#wireguard_client_endpoint: "[2a03:1b20:6:f011::f101]:51820"
+# de-fra-wg-003 (IPv6)
 wireguard_client_public_key: vVQKs2TeTbdAvl3sH16UWLSESncXAj0oBaNuFIUkLVk=
 wireguard_client_endpoint: "[2a03:1b20:6:f011::f201]:51820"
+# de-fra-wg-004 (IPv6)
+#wireguard_client_public_key: tzYLWgBdwrbbBCXYHRSoYIho4dHtrm+8bdONU1I8xzc=
+#wireguard_client_endpoint: "[2a03:1b20:6:f011::f301]:51820"
 # de-fra-wg-005 (IPv6)
 #wireguard_client_public_key: tpobOO6t18CzHjOg0S3RlZJMxd2tz4+BnRYS7NrjTnM=
 #wireguard_client_endpoint: "[2a03:1b20:6:f011::f401]:51820"
@@ -46,7 +58,13 @@ wireguard_client_endpoint: "[2a03:1b20:6:f011::f201]:51820"
 # de-fra-wg-007 (IPv6)
 #wireguard_client_public_key: mTmrSuXmTnIC9l2Ur3/QgodGrVEhhIE3pRwOHZpiYys=
 #wireguard_client_endpoint: "[2a03:1b20:6:f011::f601]:51820"
-# de-fra-wg-101 (IPv6) 
+# de-fra-wg-008 (IPv6)
+#wireguard_client_public_key: TOS3U/dJPzPnk/qsAx6gHxRVIC2wI5l+tAWaJY2mXzY=
+#wireguard_client_endpoint: "[2a03:1b20:6:f011::f701]:51820"
+# de-fra-wg-009 (IPv6)
+#wireguard_client_public_key: flq7zR8W5FxouHBuZoTRHY0A0qFEMQZF5uAgV4+sHVw=
+#wireguard_client_endpoint: "[2a03:1b20:6:f011::f901]:51820"
+# de-fra-wg-101 (IPv6)
 #wireguard_client_public_key: Voioje9Gfb7aTiK2/H6VyHFK1AFap1glIX0Z1EX2mRQ=
 #wireguard_client_endpoint: "[2001:ac8:20:274::a99f]:51820"
 # de-fra-wg-102 (IPv6)
