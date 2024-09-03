@@ -1,2 +1,11 @@
 ---
 # defaults file for isc_dhcp_server
+isc_dhcp_server_dhcpd_leases_exporter_enabled: false
+isc_dhcp_server_dhcpd_leases_exporter_version: v0.2.3
+isc_dhcp_server_dhcpd_leases_exporter_vars_map:
+  aarch64:
+    arch: "arm64"
+    checksum: "sha256:a04b83a8c36f104fd8248d0172f051f217cf68c427d24a3de6d225fa113d0e8d"
+  x86_64:
+    arch: "amd64"
+    checksum: "sha256:49d8edbf305dafb6eab13159e0615eea6996dfa1b2e5588cf73de36c36b7b310"

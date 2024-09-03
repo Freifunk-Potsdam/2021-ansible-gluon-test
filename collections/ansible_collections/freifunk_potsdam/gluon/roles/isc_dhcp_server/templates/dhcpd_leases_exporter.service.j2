@@ -1,0 +1,11 @@
+[Unit]
+Description=DHCPD Leases Exporter for Interface br{{ item }}
+After=dhcpd4@br{{ item }}
+
+[Service]
+User=dhcpd
+ExecStart=/usr/local/bin/dhcpd_leases_exporter --dhcpd.leases=/var/lib/dhcp/dhcpd-br{{ item }}.leases --metrics.namespace="dhcpd_br{{ item }}_leases" --web.listen-address="[::1]:{{ 9198 + item | int }}" --web.telemetry-path=/metrics/dhcpd_br{{ item }}_leases
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

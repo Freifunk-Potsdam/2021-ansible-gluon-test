@@ -133,3 +133,43 @@
     name: "dhcpd6@br{{ item }}"
     enabled: true
   loop: "{{ domains | flatten }}"
+
+- name: Prometheus DHCPd exporter
+  when: isc_dhcp_server_dhcpd_leases_exporter_enabled|default('false')
+  block:
+
+    - name: Download exporter
+      ansible.builtin.get_url:
+        url: >-
+          https://github.com/DRuggeri/dhcpd_leases_exporter/releases/download/
+          {{ isc_dhcp_server_dhcpd_leases_exporter_version }}/dhcpd_leases_exporter-
+          {{ isc_dhcp_server_dhcpd_leases_exporter_version }}-linux-
+          {{ isc_dhcp_server_dhcpd_leases_exporter_vars_map[ansible_architecture].arch }}
+        dest: /usr/local/bin/dhcpd_leases_exporter
+        checksum: "{{ isc_dhcp_server_dhcpd_leases_exporter_vars_map[ansible_architecture].checksum }}"
+        owner: root
+        group: root
+        mode: "0755"
+
+    # NOTE: A unit template can not be used, since we can not listen on the
+    #       same port and provide only one argument with a template
+    - name: Create service files
+      register: dhcpd_leases_exporter_service_file
+      ansible.builtin.template:
+        src: dhcpd_leases_exporter.service.j2
+        dest: "/etc/systemd/system/dhcpd_leases_exporter_br{{ item }}.service"
+        owner: root
+        group: root
+        mode: "0644"
+      loop: "{{ domains | flatten }}"
+
+    - name: Start and enable service
+      ansible.builtin.systemd_service:
+        name: "dhcpd_leases_exporter_br{{ item }}"
+        daemon_reload: "{{ dhcpd_leases_exporter_service_file.results[idx].changed }}"
+        enabled: true
+        state: started
+      loop: "{{ domains | flatten }}"
+      loop_control:
+        index_var: idx
+      when: not ansible_check_mode

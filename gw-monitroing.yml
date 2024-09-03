@@ -36,6 +36,48 @@
               regex: "([^:]+)(:[0-9]+)?"
               replacement: "${1}"
 
+        - job_name: gw-caddy
+          scheme: https
+          metrics_path: /metrics/caddy
+          static_configs:
+            - targets:
+                - "gw1.freifunk-potsdam.de"
+                - "gw2.freifunk-potsdam.de"
+                - "gw3.freifunk-potsdam.de"
+          relabel_configs:
+            - source_labels: [__address__]
+              target_label: instance
+              regex: "([^:]+)(:[0-9]+)?"
+              replacement: "${1}"
+
+        - job_name: gw-dhcp4-br0-leases
+          scheme: https
+          metrics_path: /metrics/dhcpd_br0_leases
+          static_configs:
+            - targets:
+                - "gw1.freifunk-potsdam.de"
+                - "gw2.freifunk-potsdam.de"
+                - "gw3.freifunk-potsdam.de"
+          relabel_configs:
+            - source_labels: [__address__]
+              target_label: instance
+              regex: "([^:]+)(:[0-9]+)?"
+              replacement: "${1}"
+
+        - job_name: gw-dhcp4-br16-leases
+          scheme: https
+          metrics_path: /metrics/dhcpd_br16_leases
+          static_configs:
+            - targets:
+                - "gw1.freifunk-potsdam.de"
+                - "gw2.freifunk-potsdam.de"
+                - "gw3.freifunk-potsdam.de"
+          relabel_configs:
+            - source_labels: [__address__]
+              target_label: instance
+              regex: "([^:]+)(:[0-9]+)?"
+              replacement: "${1}"
+
     librespeed_frontend_config:
       - name: "Gateway 1 (Intern, IPv4)"
         server: "https://gw1-ipv4-speedtest-backend.internal.ffp.oci.0xef.de/"

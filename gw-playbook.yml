@@ -252,6 +252,8 @@
               @blocked not remote_ip 2603:c020:801d:3900:8a2e:f69b:a8e2:cd76 130.61.102.150
               respond @blocked "Access Denied" 403
               reverse_proxy /metrics/node [::1]:9100
+              reverse_proxy /metrics/dhcpd_br0_leases [::1]:9198
+              reverse_proxy /metrics/dhcpd_br16_leases [::1]:9214
               metrics /metrics/caddy
           }
         owner: root
