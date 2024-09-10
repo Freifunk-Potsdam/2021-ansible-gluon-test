@@ -217,6 +217,14 @@
 
               redir /grafana /grafana/
               reverse_proxy /grafana/* [::1]:3000
+
+              handle_path /prometheus/* {
+                # NOTE: prior v2.8.0 directive name
+                basicauth {
+                  ffp-status-grafana $2a$14$SFPakHNIFbI0e2aiFpFgmOKfWGuAkVn6wOwo6w.n2J09prrcbCyza
+                }
+                reverse_proxy [::1]:9090
+              }
           }
           https://speedtest.ffp.oci.0xef.de {
               bind [{{ ansible_default_ipv6.address|default(ansible_all_ipv6_addresses[0]) }}] {{ ansible_default_ipv4.address|default(ansible_all_ipv4_addresses[0]) }}
