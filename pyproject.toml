@@ -6,8 +6,8 @@ authors = ["Hannes Fuchs <hannes.fuchs@gmx.org>"]
 package-mode = false
 
 [tool.poetry.dependencies]
-python = ">=3.10,<4.0"
-ansible = "^10.0.1"
+python = ">=3.11,<4.0"
+ansible = "^11.1.0"
 # needed for ansible templates for IP address calculations
 netaddr = "^1.3.0"
 dnspython = "^2.6.1"
