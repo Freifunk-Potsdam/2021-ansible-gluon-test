@@ -221,7 +221,7 @@
               handle_path /prometheus/* {
                 # NOTE: prior v2.8.0 directive name
                 basicauth {
-                  ffp-status-grafana $2a$14$SFPakHNIFbI0e2aiFpFgmOKfWGuAkVn6wOwo6w.n2J09prrcbCyza
+                  ffp-status-grafana $2a$14$O9ZZbJE8iDkCDjfCkBnxUeYn/j6cBEnZhbhnO3e8AUoddjFu53imG
                 }
                 reverse_proxy [::1]:9090
               }
