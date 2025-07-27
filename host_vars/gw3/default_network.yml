@@ -1,7 +1,3 @@
 ---
 default_network_match:
   Name: "en*"
-
-default_network_network_section_extra_options:
-  - L2TP: l2tpg3t1
-  - L2TP: l2tpg3t2

@@ -12,7 +12,3 @@ default_network_dns_servers:
   - 2a03:4000:8000::fce6
   - 46.38.225.230
   - 46.38.252.230
-
-default_network_network_section_extra_options:
-  - L2TP: l2tpg2t1
-  - L2TP: l2tpg2t3
