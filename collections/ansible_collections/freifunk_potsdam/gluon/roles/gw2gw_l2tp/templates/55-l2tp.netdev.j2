@@ -10,10 +10,10 @@ TunnelId=200{{ gw_number }}{{ hostvars[item].gw_number }}
 PeerTunnelId=200{{ hostvars[item].gw_number }}{{ gw_number }}
 {% if gw2gw_use_ipv4|default(false) or hostvars[item].gw2gw_use_ipv4|default(false) %}
 Remote={{ lookup('community.general.dig', hostvars[item].ansible_host + '/A') }}
-Local={{ ansible_default_ipv4.address|default(ansible_all_ipv4_addresses[0]) }}
+Local={{ ansible_default_ipv4.address|default(ansible_all_ipv4_addresses[0]) }}@{{ ansible_default_ipv4.interface }}
 {% else %} 
 Remote={{ lookup('community.general.dig', hostvars[item].ansible_host + '/AAAA') }}
-Local={{ ansible_default_ipv6.address|default(ansible_all_ipv6_addresses[0]) }}
+Local={{ ansible_default_ipv6.address|default(ansible_all_ipv6_addresses[0]) }}@{{ ansible_default_ipv6.interface }}
 {% endif %}
 EncapsulationType=udp
 UDPSourcePort=200{{ hostvars[item].gw_number }}{{ gw_number }}
