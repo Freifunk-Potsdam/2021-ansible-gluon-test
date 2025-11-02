@@ -364,9 +364,10 @@
         volume:
           - "/srv/containers/home/containers/librespeed-frontend/servers.json:/servers.json:ro"
         ports:
-          - "127.0.0.1:8880:80"
-          - "[::1]:8880:80"
+          - "127.0.0.1:8880:8080"
+          - "[::1]:8880:8080"
         restart_policy: always
+        pull: newer
 
     - name: Create systemd unit for librespeed-frontend container
       become: true
@@ -407,9 +408,10 @@
         env:
           MODE: backend
         ports:
-          - "127.0.0.1:8881:80"
-          - "[::1]:8881:80"
+          - "127.0.0.1:8881:8080"
+          - "[::1]:8881:8080"
         restart_policy: always
+        pull: newer
 
     - name: Create systemd unit for librespeed-backend container
       become: true
