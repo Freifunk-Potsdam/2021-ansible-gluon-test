@@ -2,7 +2,7 @@
 {% for zone in bind_server_zones %}
 zone "{{ zone }}" {
   type {{ bind_server_zones[zone].type | default('primary') }};
-  file "/etc/bind/db.{{ zone }}";
+  file "/var/lib/bind/db.{{ zone }}";
 {% if bind_server_zones[zone].notify | default(false) %}
   notify yes;
 {% endif %}
