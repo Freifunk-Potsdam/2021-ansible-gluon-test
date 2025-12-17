@@ -348,6 +348,8 @@
     - name: Create librespeed frontend container
       become: true
       become_user: containers
+      retries: 3
+      delay: 5
       containers.podman.podman_container:
         force_restart: "{{ librespeed_frontend_config.changed }}"
         name: librespeed-frontend
